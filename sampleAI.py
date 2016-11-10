@@ -1,7 +1,7 @@
 import time
 import requests # if not installed already, run python -m pip install requests OR pip install requests, whatever you normally do
 import random
-r = requests.post('http://aicomp.io/api/games/search', data={'devkey': "devkey", 'username': 'username'}) # search for new game
+r = requests.post('http://aicomp.io/api/games/search', data={'devkey': "5823b8c404d7ce4a44c37ab4", 'username': 'kzhaaang'}) # search for new game
 json = r.json() # when request comes back, that means you've found a match! (validation if server goes down?)
 print(json)
 gameID = json['gameID']
