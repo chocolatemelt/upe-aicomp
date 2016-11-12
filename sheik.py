@@ -6,6 +6,12 @@ devkey = "5823b8c404d7ce4a44c37ab4"
 qualifierURL = "http://aicomp.io/api/games/practice" #practice qualifier bot
 rankedURL = "http://aicomp.io/api/games/search" #ranked matchmaking vs other AI
 
+def minimax(state, game):
+def alphabeta_search(state, game):
+    def max_value():
+    def min_value():
+
+
 def main():
     gameMode = input("Enter 1 for qualifier bot, 2 for ranked MM, anything else to abort: ").strip()
     if (not (gameMode == "1" or gameMode == "2")):
