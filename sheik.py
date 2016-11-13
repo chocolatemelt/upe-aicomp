@@ -1,6 +1,5 @@
-import requests # if not installed already, run python -m pip install requests OR pip install requests, whatever you normally do
+import requests
 
-#constants for networking
 username = "kzhaaang"
 devkey = "5823b8c404d7ce4a44c37ab4"
 qualifierURL = "http://aicomp.io/api/games/practice" #practice qualifier bot
@@ -10,7 +9,6 @@ def minimax(state, game):
 def alphabeta_search(state, game):
     def max_value():
     def min_value():
-
 
 def main():
     gameMode = input("Enter 1 for qualifier bot, 2 for ranked MM, anything else to abort: ").strip()
