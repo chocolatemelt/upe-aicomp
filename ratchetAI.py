@@ -17,64 +17,6 @@ board = [[]*boardSize] #game board (to be re-populated each turn)
 #Enum of valid space types
 SpaceType = Enum("SpaceType", "empty softBlock hardBlock")
 
-def setInitialConstants(gameState):
-    gameID = gameState['gameID']
-    playerID = gameState['playerID']
-    boardSize = int(gameState['boardSize'])
-    
-#get a list of all coords that will be hit by the bomb at position x,y
-def checkBombAffectedCoords(x,y,bombPierce,bombRange):
-    affectedCoords = [(x,y)]
-    
-    #todo: repeat code for each direction. clean up.
-    #check positive x (right) squares
-    curX = x
-    curPierce = bombPierce
-    for _ in range(bombRange):
-        curX+=1
-        if curX >= 0 and curX < boardSize:
-            affectedCoords.append(curX,y)
-            if (board[curX][y].type in [SpaceType.softBlock, SpaceType.hardBlock]):
-                curPierce -= 1
-                if (curPierce < 0):
-                    break
-     
-    #check negative x (left) squares           
-    curX = x
-    curPierce = bombPierce
-    for _ in range(bombRange):
-        curX-=1
-        if curX >= 0 and curX < boardSize:
-            affectedCoords.append(curX,y)
-            if (board[curX][y].type in [SpaceType.softBlock, SpaceType.hardBlock]):
-                curPierce -= 1
-                if (curPierce < 0):
-                    break
-                
-    #check positive y (down) squares           
-    curY = y
-    curPierce = bombPierce
-    for _ in range(bombRange):
-        curY+=1
-        if curY >= 0 and curY < boardSize:
-            affectedCoords.append(x,curY)
-            if (board[x][curY].type in [SpaceType.softBlock, SpaceType.hardBlock]):
-                curPierce -= 1
-                if (curPierce < 0):
-                    break
-    
-    #check negative y (up) squares           
-    curY = y
-    curPierce = bombPierce
-    for _ in range(bombRange):
-        curY-=1
-        if curY >= 0 and curY < boardSize:
-            affectedCoords.append(x,curY)
-            if (board[x][curY].type in [SpaceType.softBlock, SpaceType.hardBlock]):
-                curPierce -= 1
-                if (curPierce < 0):
-                    break
-
 #basic class containing info on a single unit space, including what that space is, and whether or not it is in range of an upcoming or active explosion Trail
 class Space():
     def __init__(self,gameState,x,y):
@@ -133,7 +75,31 @@ class Space():
                 if ((self.x,self.y) in bombAffectedCoords):
                     return (True,bombTurnsRemaining)
             return (False,-1)
-                
+   
+def setInitialConstants(gameState):
+    gameID = gameState['gameID']
+    playerID = gameState['playerID']
+    boardSize = int(gameState['boardSize'])
+    
+#get a list of all coords that will be hit by the bomb at position x,y
+def checkBombAffectedCoords(x,y,bombPierce,bombRange):
+    affectedCoords = [(x,y)] # the bomb square itself will be hit no matter what
+    #check negative x (left) then positive x (right) squares, then negative y (up) and then finally positive y (down) squares
+    for direction in range(-1, 6, 2):
+        curPierce = bombPierce
+        curX = x, curY = y
+        for _ in range(bombRange):
+            if (direction <= 1):
+                curX += direction
+            else:
+                curY += direction-4 #offset of 4 so that -1 -> 1 account for x increments, and 3 -> 5 (minus 4) account for y increments
+            if curX >= 0 and curX < boardSize and curY >= 0 and curY < boardSize:
+                affectedCoords.append(curX,curY)
+                if (board[curX][curY].type in [SpaceType.softBlock, SpaceType.hardBlock]):
+                    curPierce -= 1
+                    if (curPierce < 0):
+                        break   
+    return affectedCoords      
 
 #populates a 2d-list of 'Space' objects which contain information about what they contain, as well as whether or not they are in range of an explosion Trail
 #todo: currently assumes 0 pierce
@@ -152,11 +118,11 @@ def chooseMove(gameState):
     
     #returns a command to move to the next space if we are in danger of an explosion Trail, or None if we are safe
     def escapeTrail():
-        pass
+        pass #todo: perform some basic pathfinding here to get to the closest space where checkConttainsUpcomingTrail is False
     
-    #returns a command to move to the next space in order to approach the opponent, or a bomb command if next to a soft block or 3 spaces from the opponent
+    #returns a command to move to the next space in order to approach the opponent, or a bomb command if in range to hit opponent
     def approachOpponent():
-        pass  
+        pass #todo: perform some basic pathfinding here to get to the shortest path to the opponent (where blocks add a large, temp constant (eg. 15))
 
 def main():
     gameMode = input("Enter 1 for qualifier bot, 2 for ranked MM, anything else to abort: ").strip()
