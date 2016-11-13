@@ -1,3 +1,4 @@
+"""defensive AI designed to make decisions using domain heuristics and alpha-beta pruning"""
 import requests
 
 username = "kzhaaang"
@@ -6,9 +7,13 @@ qualifierURL = "http://aicomp.io/api/games/practice" #practice qualifier bot
 rankedURL = "http://aicomp.io/api/games/search" #ranked matchmaking vs other AI
 
 def minimax(state, game):
+    pass
+
 def alphabeta_search(state, game):
     def max_value():
+        pass
     def min_value():
+        pass
 
 def main():
     gameMode = input("Enter 1 for qualifier bot, 2 for ranked MM, anything else to abort: ").strip()

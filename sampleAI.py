@@ -1,4 +1,5 @@
 import requests # if not installed already, run python -m pip install requests OR pip install requests, whatever you normally do
+import random #used for sample ai to select moves at random
 
 #constants for networking
 username = "kzhaaang"
@@ -22,7 +23,7 @@ def main():
     possibleMoves = ['mu', 'ml', 'mr', 'md', 'tu', 'tl', 'tr', 'td', 'b', '', 'op', 'bp', 'buy_count', 'buy_range', 'buy_pierce', 'buy_block']
     output = {'state': 'in progress'}
     while output['state'] != 'complete':
-        moveChoice = 0 #todo: we should actually calculate a move here based on board / game state
+        moveChoice = random.randint(0,len(possibleMoves)-1) #sample ai just chooses a move at random
         r = requests.post('http://aicomp.io/api/games/submit/' + gameID, data={'playerID': playerID, 'move': possibleMoves[moveChoice], 'devkey': devkey}); # submit sample move
         json = r.json()
         print(json)
