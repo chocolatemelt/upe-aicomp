@@ -1,93 +1,8 @@
 """basic AI designed to overcome basic, common circumstances in order to beat random the qualifier bot"""
 import requests
-from enum import Enum
 
-# networking constants
-username = "kzhaaang"
-devkey = "5823b8c404d7ce4a44c37ab4"
-qualifierURL = "http://aicomp.io/api/games/practice" # practice qualifier bot
-rankedURL = "http://aicomp.io/api/games/search" # ranked matchmaking vs other AI
-
-# game constants
-gameID = '' # id of current game session
-playerID = '' # player number
-boardSize = -1 # number of units in grid row or column
-board = [] # game board (to be re-populated each turn)
-
-# Enum of valid space types
-SpaceType = Enum("SpaceType", "empty softBlock hardBlock")
-
-# basic class containing info on a single unit space, including what that space is, and whether or not it is in range of an upcoming or active explosion Trail
-class Space():
-    def __str__(self):
-        return "Space at: " + str(self.x) + ", " + str(self.y)
-
-    def __repr__(self):
-        return self.__str__()
-
-    def __init__(self,gameState,x,y):
-        # set whether or not the player or the opponent is currently on this space
-        def checkContainsEitherPlayer():
-            return int(gameState['player']['x']) == self.x and int(gameState['player']['y']) == self.y, int(gameState['opponent']['x']) == self.x and int(gameState['opponent']['y']) == self.y
-
-        # set type according to gameState
-        def checkType():
-            if (int(gameState['hardBlockBoard'][self.y*boardSize + self.x]) == 1):
-                return SpaceType.empty
-            if (int(gameState['softBlockBoard'][self.y*boardSize + self.x]) == 1):
-                return SpaceType.softBlock
-            return SpaceType.hardBlock
-
-        # set whether or not a bomb is currently on this space
-        def checkContainsBomb():
-            bombKeys = gameState['bombMap'].keys()
-            for coord in bombKeys:
-                bombX = int(coord.split(",")[0])
-                bombY = int(coord.split(",")[1])
-                if (bombX ==self.x and bombY == self.y):
-                    return True
-            return False
-
-        # set whether or not an explosion Trail is currently on this space
-        def checkContainsTrail():
-            trailKeys = gameState['trailMap'].keys()
-            for coord in trailKeys:
-                trailX = int(coord.split(",")[0])
-                trailY = int(coord.split(",")[1])
-                if (trailX ==self.x and trailY == self.y):
-                    return True
-            return False
-
-        self.x = x
-        self.y = y
-        self.type = checkType()
-        self.containsBomb = checkContainsBomb()
-        self.containsTrail = checkContainsTrail()
-        self.containsPlayer,self.containsOpponent = checkContainsEitherPlayer()
-
-    def initializeLateProperties(self,gameState):
-        # set whether or not an explosion Trail will soon be on this space
-        def checkContainsUpcomingTrail():
-            # todo: repeat code from checkContainsBomb
-            bombKeys = gameState['bombMap'].keys()
-            for coord in bombKeys:
-                bombX = int(coord.split(",")[0])
-                bombY = int(coord.split(",")[1])
-                bombPlayer = gameState['bombMap'][coord]['owner']
-                bombTurnsRemaining = gameState['bombMap'][coord]['tick']
-                if (bombPlayer == gameState['playerIndex']):
-                    bombPierce = gameState['player']['bombPierce']
-                    bombRange = gameState['player']['bombRange']
-                else:
-                    bombPierce = gameState['opponent']['bombPierce']
-                    bombRange = gameState['opponent']['bombRange']
-                bombAffectedCoords = checkBombAffectedCoords(bombX,bombY,bombPierce,bombRange)
-                if ((self.x,self.y) in bombAffectedCoords):
-                    return (True,bombTurnsRemaining)
-            return (False,-1)
-
-        # todo: may be thrown off if bomb range and pierce count are upgraded after placing (depending on game mechanics)
-        self.containsUpcomingTrail,self.turnsUntilUpcomingTrail = checkContainsUpcomingTrail()
+from bomberman.space import *
+from bomberman.constants import *
 
 def setInitialConstants(gameState):
     global gameID, playerID, boardSize
@@ -313,9 +228,9 @@ def chooseMove(gameState):
         if (not approachPath[-1].containsTrail):
             if (approachPath[-1].type == SpaceType.softBlock or approachPath[-1].containsOpponent): # place a bomb if we are right next to a soft block or the opponent
                 return "b" # todo: this assumes that we currently have a bomb available. Account for case when we do not have any bombs available to use
-            return ''
-        return moveTo(gameState,approachPath[-1])
-    else:
+                return ''
+            return moveTo(gameState,approachPath[-1])
+        else:
         # todo: we should probably do something here even though the next space in our path is currently lethal
             return ''
         # todo: perform some basic pathfinding here to get to the shortest path to the opponent (where blocks add a large, temp constant (eg. 15))
