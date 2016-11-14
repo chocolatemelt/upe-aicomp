@@ -248,6 +248,18 @@ def findPath(startSpace, desiredProperty, desiredState = True, returnAllSolution
     def conditionMet(space):
         return eval("space."+desiredProperty+"== (True if desiredState else False)")
 
+#return the correct move name to instruct our player to move to the desired space
+def moveTo(gameState,space):
+    if (space.x > int(gameState['player'].x)):
+        return "mr"
+    if (space.x < int(gameState['player'].x)):
+        return "ml"
+    if (space.y > int(gameState['player'].y)):
+        return "md"
+    if (space.y < int(gameState['player'].y)):
+        return "mu"
+    return '' #if space is not adjacent to the player in one of the four cardinal directions, we cannot move to it
+    
 #called once per frame. re-populates board, then calls submethods to determine move choice
 def chooseMove(gameState):
     board = populateBoard(gameState)
@@ -256,12 +268,35 @@ def chooseMove(gameState):
     
     #returns a command to move to the next space if we are in danger of an explosion Trail, or None if we are safe
     def escapeTrail():
-        return findPath(board[int(gameState['player'].x)][int(gameState['player'].y)],"containsUpcomingTrail",False)
+        #if we are not currently on a space that is slated to contain a trail, we don't need to do anything
+        if (not board[int(gameState['player'].x)][int(gameState['player'].y)].containsUpcomingTrail):
+            return None
+        escapePath = findPath(board[int(gameState['player'].x)][int(gameState['player'].y)],"containsUpcomingTrail",False)
+        if (escapePath == None): #todo: we should probably do something here even though we couldn't find a path to escape
+            return ''
+        if (not escapePath[0].containsTrail):
+            if (escapePath[0].type == SpaceType.softBlock):
+                #todo: we should probably do something here even though the next space in our path is currently a soft block
+                return ''
+            return moveTo(gameState,escapePath[0])
+        else: 
+            #todo: we should probably do something here even though the next space in our path is currently lethal
+            return ''
         #todo: perform some basic pathfinding here to get to the closest space where checkConttainsUpcomingTrail is False
     
     #returns a command to move to the next space in order to approach the opponent, or a bomb command if in range to hit opponent
     def approachOpponent():
-        return findPath(board[int(gameState['player'].x)][int(gameState['player'].y)],"containsOpponent")
+        approachPath = findPath(board[int(gameState['player'].x)][int(gameState['player'].y)],"containsOpponent")
+        if (approachPath == None): #todo: we should probably do something here even though we couldn't find a path to approach (this state may be unreachable though depending on implementatino)
+            return ''
+        if (not approachPath[0].containsTrail):
+            if (approachPath[0].type == SpaceType.softBlock):
+                return "b" #todo: this assumes that we currently have a bomb available. Account for case when we do not have any bombs available to use
+                return ''
+            return moveTo(gameState,approachPath[0])
+        else: 
+            #todo: we should probably do something here even though the next space in our path is currently lethal
+            return ''
         #todo: perform some basic pathfinding here to get to the shortest path to the opponent (where blocks add a large, temp constant (eg. 15))
 
 def main():
