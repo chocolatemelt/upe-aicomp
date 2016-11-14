@@ -290,7 +290,7 @@ def chooseMove(gameState):
         if (approachPath == None): #todo: we should probably do something here even though we couldn't find a path to approach (this state may be unreachable though depending on implementatino)
             return ''
         if (not approachPath[0].containsTrail):
-            if (approachPath[0].type == SpaceType.softBlock):
+            if (approachPath[0].type == SpaceType.softBlock or approachPath[0].containsOpponent): #place a bomb if we are right next to a soft block or the opponent
                 return "b" #todo: this assumes that we currently have a bomb available. Account for case when we do not have any bombs available to use
                 return ''
             return moveTo(gameState,approachPath[0])
