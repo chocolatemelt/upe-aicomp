@@ -19,7 +19,12 @@ SpaceType = Enum("SpaceType", "empty softBlock hardBlock")
 
 #basic class containing info on a single unit space, including what that space is, and whether or not it is in range of an upcoming or active explosion Trail
 class Space():
-    def __init__(self,gameState,x,y):
+    def __str__(self):
+        return "Space at: " + str(self.x) + ", " + str(self.y)
+    
+    def __repr__(self):
+        return self.__str__()
+    def __init__(self,gameState,x,y):        
         #set whether or not the player or the opponent is currently on this space
         def checkContainsEitherPlayer():
             return int(gameState['player']['x']) == self.x and int(gameState['player']['y']) == self.y, int(gameState['opponent']['x']) == self.x and int(gameState['opponent']['y']) == self.y
@@ -52,6 +57,14 @@ class Space():
                     return True
             return False
         
+        self.x = x
+        self.y = y        
+        self.type = checkType()
+        self.containsBomb = checkContainsBomb()
+        self.containsTrail = checkContainsTrail()
+        self.containsPlayer,self.containsOpponent = checkContainsEitherPlayer()
+        
+    def initializeLateProperties(self,gameState):        
         #set whether or not an explosion Trail will soon be on this space
         def checkContainsUpcomingTrail():
             #todo: repeat code from checkContainsBomb
@@ -62,24 +75,18 @@ class Space():
                 bombPlayer = gameState['bombMap'][coord]['owner']
                 bombTurnsRemaining = gameState['bombMap'][coord]['tick']
                 if (bombPlayer == gameState['playerIndex']):
-                    bombPierce = gameState['player'].bombPierce
-                    bombRange = gameState['player'].bombRange
+                    bombPierce = gameState['player']['bombPierce']
+                    bombRange = gameState['player']['bombRange']
                 else:
-                    bombPierce = gameState['opponent'].bombPierce
-                    bombRange = gameState['opponent'].bombRange
+                    bombPierce = gameState['opponent']['bombPierce']
+                    bombRange = gameState['opponent']['bombRange']
                 bombAffectedCoords = checkBombAffectedCoords(bombX,bombY,bombPierce,bombRange)
                 if ((self.x,self.y) in bombAffectedCoords):
                     return (True,bombTurnsRemaining)
             return (False,-1)
         
-        self.x = x
-        self.y = y
-        self.type = checkType()
-        self.containsBomb = checkContainsBomb()
-        self.containsTrail = checkContainsTrail()
         #todo: may be thrown off if bomb range and pierce count are upgraded after placing (depending on game mechanics)
         self.containsUpcomingTrail,self.turnsUntilUpcomingTrail = checkContainsUpcomingTrail()
-        self.containsPlayer,self.containsOpponent = checkContainsEitherPlayer()
         
 def setInitialConstants(gameState):
     global gameID, playerID, boardSize
@@ -93,14 +100,17 @@ def checkBombAffectedCoords(x,y,bombPierce,bombRange):
     #check negative x (left) then positive x (right) squares, then negative y (up) and then finally positive y (down) squares
     for direction in range(-1, 6, 2):
         curPierce = bombPierce
-        curX = x, curY = y
+        curX = x
+        curY = y
         for _ in range(bombRange):
             if (direction <= 1):
                 curX += direction
             else:
                 curY += direction-4 #offset of 4 so that -1 -> 1 account for x increments, and 3 -> 5 (minus 4) account for y increments
             if curX >= 0 and curX < boardSize and curY >= 0 and curY < boardSize:
-                affectedCoords.append(curX,curY)
+                affectedCoords.append((curX,curY))
+                print("curX: " + str(curX) + ", curY: " + str(curY))
+                print(board)
                 if (board[curX][curY].type in [SpaceType.softBlock, SpaceType.hardBlock]):
                     curPierce -= 1
                     if (curPierce < 0):
@@ -114,9 +124,15 @@ def populateBoard(gameState):
     board = []
     for i in range(boardSize):
         board.append([])
+    #first create all spaces
     for i in range(boardSize):
         for r in range(boardSize):
             board[r].append(Space(gameState,r,i))
+    #now check space properties that require an initialized board
+    for i in range(boardSize):
+        for r in range(boardSize):
+            board[r][i].initializeLateProperties(gameState)
+            
 
 def binarySearch(a, x, key, leftMost = False, lo = 0, hi = None):
     """Return the index where to insert item x in list a, assuming a is sorted.
@@ -159,8 +175,8 @@ def binarySearch(a, x, key, leftMost = False, lo = 0, hi = None):
 
     return lo
 
-#find shortest path from startSpace to a space satisfying desiredProperty
-def findPath(gameState,startSpace, desiredProperty, desiredState = True, returnAllSolutions = False):
+#find shortest path from startSpace to a space satisfying desiredProperty (note: path goes from end to start, not from start to end)
+def findPath(startSpace, desiredProperty, desiredState = True, returnAllSolutions = False):
     #return a list of all valid adjacent spaces (left, right, up, and down) 
     def getAdjacentSpaces(space):
         adjacentSpaces = []
@@ -176,7 +192,6 @@ def findPath(gameState,startSpace, desiredProperty, desiredState = True, returnA
     
     #are the goal conditions met by this space?
     def conditionMet(space):
-        print(getattr(space,desiredProperty))
         return getattr(space,desiredProperty) == (True if desiredState else False)
     
     if (conditionMet(startSpace)): #if startSpace meets the desired property, return it without doing any further calculations
@@ -191,9 +206,6 @@ def findPath(gameState,startSpace, desiredProperty, desiredState = True, returnA
     solutions = []
     finalPathDistance = -1
     openSet = [startSpace]
-    
-    print("condition met test: ")
-    print(conditionMet(board[int(gameState['opponent']['x'])][int(gameState['opponent']['y'])]))
     
     #main iteration: keep popping spaces from the back until we have found a solution (or all equal solutions if returnAllSolutions is True) or openSet is empty (in which case there is no solution)
     while (len(openSet) > 0):
@@ -255,13 +267,13 @@ def findPath(gameState,startSpace, desiredProperty, desiredState = True, returnA
 
 #return the correct move name to instruct our player to move to the desired space
 def moveTo(gameState,space):
-    if (space.x > int(gameState['player'].x)):
+    if (space.x > int(gameState['player']['x'])):
         return "mr"
-    if (space.x < int(gameState['player'].x)):
+    if (space.x < int(gameState['player']['x'])):
         return "ml"
-    if (space.y > int(gameState['player'].y)):
+    if (space.y > int(gameState['player']['y'])):
         return "md"
-    if (space.y < int(gameState['player'].y)):
+    if (space.y < int(gameState['player']['y'])):
         return "mu"
     return '' #if space is not adjacent to the player in one of the four cardinal directions, we cannot move to it
     
@@ -270,20 +282,19 @@ def chooseMove(gameState):
     #returns a command to move to the next space if we are in danger of an explosion Trail, or None if we are safe
     def escapeTrail():
         #if we are not currently on a space that is slated to contain a trail, we don't need to do anything
-        '''print(board)
-        print(int(gameState['player']['x']))
-        print(int(gameState['player']['y']))
-        print(boardSize)'''
         if (not board[int(gameState['player']['x'])][int(gameState['player']['y'])].containsUpcomingTrail):
             return None
-        escapePath = findPath(gameState, board[int(gameState['player']['x'])][int(gameState['player']['y'])],"containsUpcomingTrail",False)
+        escapePath = findPath(board[int(gameState['player']['x'])][int(gameState['player']['y'])],"containsUpcomingTrail",False)
+        escapePath.pop() #pop last element as this will always be startSpace
+        if (len(escapePath) == 0):
+            escapePath = None
         if (escapePath == None): #todo: we should probably do something here even though we couldn't find a path to escape
             return ''
-        if (not escapePath[0].containsTrail):
-            if (escapePath[0].type == SpaceType.softBlock):
+        if (not escapePath[-1].containsTrail):
+            if (escapePath[-1].type == SpaceType.softBlock):
                 #todo: we should probably do something here even though the next space in our path is currently a soft block
                 return ''
-            return moveTo(gameState,escapePath[0])
+            return moveTo(gameState,escapePath[-1])
         else: 
             #todo: we should probably do something here even though the next space in our path is currently lethal
             return ''
@@ -291,17 +302,18 @@ def chooseMove(gameState):
     
     #returns a command to move to the next space in order to approach the opponent, or a bomb command if in range to hit opponent
     def approachOpponent():
-        approachPath = findPath(gameState, board[int(gameState['player']['x'])][int(gameState['player']['y'])],"containsOpponent")
-        print("approach path start")
+        approachPath = findPath(board[int(gameState['player']['x'])][int(gameState['player']['y'])],"containsOpponent")
+        approachPath.pop() #pop last element as this will always be startSpace
+        if (len(approachPath) == 0):
+            approachPath = None
         print(approachPath)
-        print("approach path end")
         if (approachPath == None): #todo: we should probably do something here even though we couldn't find a path to approach (this state may be unreachable though depending on implementatino)
             return ''
-        if (not approachPath[0].containsTrail):
-            if (approachPath[0].type == SpaceType.softBlock or approachPath[0].containsOpponent): #place a bomb if we are right next to a soft block or the opponent
+        if (not approachPath[-1].containsTrail):
+            if (approachPath[-1].type == SpaceType.softBlock or approachPath[-1].containsOpponent): #place a bomb if we are right next to a soft block or the opponent
                 return "b" #todo: this assumes that we currently have a bomb available. Account for case when we do not have any bombs available to use
                 return ''
-            return moveTo(gameState,approachPath[0])
+            return moveTo(gameState,approachPath[-1])
         else: 
             #todo: we should probably do something here even though the next space in our path is currently lethal
             return ''
@@ -309,13 +321,7 @@ def chooseMove(gameState):
         
     populateBoard(gameState)
     move = escapeTrail()
-    print(move)
-    move2 = approachOpponent()      
-    print(move2)
-    
-    print("big coord test:")
-    print(board[int(gameState['opponent']['x'])][int(gameState['opponent']['y'])].x,board[int(gameState['opponent']['x'])][int(gameState['opponent']['y'])].y,gameState['opponent']['x'],gameState['opponent']['y'])
-    return move if move != None else move2
+    return move if move != None else approachOpponent()
 
 def main():
     gameMode = input("Enter 1 for qualifier bot, 2 for ranked MM, anything else to abort: ").strip()
