@@ -27,6 +27,11 @@ class Space():
         self.containsTrail = checkContainsTrail()
         #todo: may be thrown off if bomb range and pierce count are upgraded after placing (depending on game mechanics)
         self.containsUpcomingTrail,self.turnsUntilUpcomingTrail = checkContainsUpcomingTrail()
+        self.containsPlayer,self.containsOpponent = checkContainsEitherPlayer()
+        
+        #set whether or not the player or the opponent is currently on this space
+        def checkContainsEitherPlayer():
+            return int(gameState['player']['x']) == self.x and int(gameState['player']['y']) == self.y, int(gameState['opponent']['x']) == self.x and int(gameState['opponent']['y']) == self.y
         
         #set type according to gameState
         def checkType():
@@ -65,7 +70,7 @@ class Space():
                 bombY = int(coord.split(",")[1])
                 bombPlayer = gameState['bombMap'][coord]['owner']
                 bombTurnsRemaining = gameState['bombMap'][coord]['tick']
-                if (bombPlayer == playerID):
+                if (bombPlayer == gameState['playerIndex']):
                     bombPierce = gameState['player'].bombPierce
                     bombRange = gameState['player'].bombRange
                 else:
@@ -77,6 +82,7 @@ class Space():
             return (False,-1)
    
 def setInitialConstants(gameState):
+    global gameID, playerID
     gameID = gameState['gameID']
     playerID = gameState['playerID']
     boardSize = int(gameState['boardSize'])
@@ -111,6 +117,138 @@ def populateBoard(gameState):
         board[x][y] = Space(gameState,x,y)
     return board    
 
+def binarySearch(a, x, key, leftMost = False, lo = 0, hi = None):
+    """Return the index where to insert item x in list a, assuming a is sorted.
+    The return value i is such that all e in a[:i] have e <= x, and all e in
+    a[i:] have e > x.  So if x already appears in the list, a.insert(x) will
+    insert just after the rightmost x already there.
+
+    Optional args lo (default 0) and hi (default len(a)) bound the
+    slice of a to be searched."""
+    if (hi == None):
+        hi = a.length
+    if (key != None):
+        x = eval("x." + key) 
+    
+    if (leftMost):
+        while (lo < hi):
+            mid = (lo+hi)//2
+            if (key == None):
+                value = a[mid]
+            else:
+                value = eval("a[mid]." + key)
+            
+            if (x <= value):
+                hi = mid
+            else:
+                lo = mid+1
+                
+    else:
+        while (lo < hi):
+            mid = (lo+hi)//2
+            if (key == None):
+                value = a[mid]
+            else:
+                value = eval("a[mid]." + key)
+            
+            if (x < value):
+                hi = mid
+            else:
+                lo = mid+1
+
+    return lo
+
+#find shortest path from startSpace to a space satisfying desiredProperty
+def findPath(startSpace, desiredProperty, desiredState = True, returnAllSolutions = False):
+    if (conditionMet(startSpace)): #if startSpace meets the desired property, return it without doing any further calculations
+        if (not returnAllSolutions):
+            return [startSpace]
+        return [[startSpace]]
+    
+    #initialize variables
+    startSpace.startDistance = 0
+    startSpace.parents = []
+    closedSet = []
+    solutions = []
+    finalPathDistance = -1
+    openSet = [startSpace]
+    
+    #main iteration: keep popping spaces from the back until we have found a solution (or all equal solutions if returnAllSolutions is True) or openSet is empty (in which case there is no solution)
+    while (len(openSet) > 0):
+        currentSpace = openSet.pop()
+        closedSet.append(currentSpace)
+        adjacentSpaces = getAdjacentSpaces(currentSpace)
+        
+        #main inner iteration: check each space in adjacentSpaces for validity
+        for newSpace in adjacentSpaces:
+            #if returnAllSolutions is True and we have surpassed finalPathDistance, check if current solution is less optimal, in which case exit immediately
+            if ((finalPathDistance != -1) and (currentSpace.startDistance + 1 > finalPathDistance)):
+                return solutions
+            
+            #if the newSpace is a goal, find a path back to startSpace (or all equal paths if returnAllSolutions is True) 
+            if conditionMet(newSpace):
+                newSpace.parents = [currentSpace] #start the path with currentSpace and work our way back
+                pathsFound = [[newSpace]]
+                
+                #grow out the list of paths back in pathsFound until all valid paths have been exhausted
+                while (len(pathsFound) > 0): 
+                    if (pathsFound[0][len(pathsFound[0])-1].parents[0] == startSpace): #we've reached the start space, thus completing this path
+                        if (not returnAllSolutions):
+                            return pathsFound[0]
+                        finalPathDistance = len(pathsFound[0])
+                        solutions.append(pathsFound.pop(0))
+                        continue
+                    
+                    #branch additional paths for each parent of the current path's current space
+                    for i in range(len(pathsFound[0][len(pathsFound[0])-1].parents)):
+                        if (i == len(pathsFound[0][len(pathsFound[0])-1].parents) - 1):
+                            pathsFound[0].append(pathsFound[0][len(pathsFound[0])-1].parents[i])
+                        else:
+                            pathsFound.push(list(pathsFound[0]))
+                            pathsFound[len(pathsFound)-1].push(pathsFound[0][len(pathsFound[0])-1].parents[i])
+                            
+            #attempt to keep branching from newSpace as long as it is a walkable type
+            #todo: adjust weighting when encountering soft blocks, as blowing them up will take multiple turns
+            if ((newSpace.type in [SpaceType.empty, SpaceType.softBlock])):                    
+                newStartDistance = currentSpace.startDistance + 1
+                notInOpenSet = not newSpace in openSet
+                
+                #don't bother with newSpace if it has already been visited unless our new distance from the start space is smaller than its existing startDistance
+                if ((newSpace in closedSet) and (newSpace.startDistance < newStartDistance)):
+                    continue
+                
+                #accept newSpace if newSpace has not yet been visited or its new distance from the start space is equal to its existing startDistance
+                if (notInOpenSet or newSpace.startDistance == newStartDistance):
+                    if (notInOpenSet): #only reset parent list if this is the first time we are visiting newSpace
+                        newSpace.parents = []
+                    
+                    newSpace.parents.push(currentSpace)
+                    newSpace.startDistance = newStartDistance
+                    if (notInOpenSet): #if newSpace does not yet exist in the open set, insert it into the appropriate position using a binary search
+                        openSet.insert(binarySearch(openSet,newSpace,"startDistance",True),newSpace)
+                
+    if (len(solutions) == 0):
+        return None #if solutions is None then that means that no path was found to a space satisfying desiredProperty
+    return solutions                  
+    
+    #return a list of all valid adjacent spaces (left, right, up, and down) 
+    def getAdjacentSpaces(space):
+        adjacentSpaces = []
+        if (space.x > 0):
+            adjacentSpaces.append(board[space.x-1][space.y])
+        if (space.y > 0):
+            adjacentSpaces.append(board[space.x][space.y-1])
+        if (space.x < boardSize - 1):
+            adjacentSpaces.append(board[space.x+1][space.y])
+        if (space.y < boardSize - 1):
+            adjacentSpaces.append(board[space.x][space.y+1])
+        return adjacentSpaces
+    
+    #are the goal conditions met by this space?
+    def conditionMet(space):
+        return eval("space."+desiredProperty+"== (True if desiredState else False)")
+
+#called once per frame. re-populates board, then calls submethods to determine move choice
 def chooseMove(gameState):
     board = populateBoard(gameState)
     move = escapeTrail()
@@ -118,11 +256,13 @@ def chooseMove(gameState):
     
     #returns a command to move to the next space if we are in danger of an explosion Trail, or None if we are safe
     def escapeTrail():
-        pass #todo: perform some basic pathfinding here to get to the closest space where checkConttainsUpcomingTrail is False
+        return findPath(board[int(gameState['player'].x)][int(gameState['player'].y)],"containsUpcomingTrail",False)
+        #todo: perform some basic pathfinding here to get to the closest space where checkConttainsUpcomingTrail is False
     
     #returns a command to move to the next space in order to approach the opponent, or a bomb command if in range to hit opponent
     def approachOpponent():
-        pass #todo: perform some basic pathfinding here to get to the shortest path to the opponent (where blocks add a large, temp constant (eg. 15))
+        return findPath(board[int(gameState['player'].x)][int(gameState['player'].y)],"containsOpponent")
+        #todo: perform some basic pathfinding here to get to the shortest path to the opponent (where blocks add a large, temp constant (eg. 15))
 
 def main():
     gameMode = input("Enter 1 for qualifier bot, 2 for ranked MM, anything else to abort: ").strip()
@@ -141,7 +281,7 @@ def main():
     output = {'state': 'in progress'}
     while output['state'] != 'complete':
         moveChoice = chooseMove(json) #todo: we should actually calculate a move here based on board / game state
-        r = requests.post('http://aicomp.io/api/games/submit/' + gameID, data={'playerID': playerID, 'move': possibleMoves[moveChoice], 'devkey': devkey}); # submit sample move
+        r = requests.post('http://aicomp.io/api/games/submit/' + gameID, data={'playerID': playerID, 'move': possibleMoves[moveChoice], 'devkey': devkey}) # submit sample move
         json = r.json()
         print(json)
         output = json
