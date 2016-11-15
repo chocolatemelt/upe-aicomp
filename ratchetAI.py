@@ -39,7 +39,8 @@ def bisectRightKey(a, x, lo=0, hi=None, key = None):
     return lo
 
 # find shortest path from startSpace to a space satisfying desiredProperty (note: path goes from end to start, not from start to end)
-def findPath(startSpace, desiredProperty, desiredState = True, returnAllSolutions = False):
+def findPath(startSpace, desiredProperty, desiredState = True, returnAllSolutions = False, allowSoftBlocks = True, destinationCanBeSolidBlock = False):
+    #print("allowSoftBlocks?: " + str(allowSoftBlocks))
     from bomberman.constants import username,devkey,qualifierURL,rankedURL,gameID,playerID,boardSize,board
     # return a list of all valid adjacent spaces (left, right, up, and down)
     def getAdjacentSpaces(space):
@@ -56,7 +57,7 @@ def findPath(startSpace, desiredProperty, desiredState = True, returnAllSolution
 
     # are the goal conditions met by this space?
     def conditionMet(space):
-        return getattr(space,desiredProperty) == (True if desiredState else False)
+        return (True if destinationCanBeSolidBlock else space.type != SpaceType.hardBlock) and (getattr(space,desiredProperty) == (True if desiredState else False))
 
     if (conditionMet(startSpace)): # if startSpace meets the desired property, return it without doing any further calculations
         if (not returnAllSolutions):
@@ -107,7 +108,7 @@ def findPath(startSpace, desiredProperty, desiredState = True, returnAllSolution
 
             # attempt to keep branching from newSpace as long as it is a walkable type
             # todo: adjust weighting when encountering soft blocks, as blowing them up will take multiple turns
-            if ((newSpace.type in (SpaceType.empty, SpaceType.softBlock))):
+            if (((newSpace.type in (SpaceType.empty, SpaceType.softBlock)) and allowSoftBlocks) or newSpace.type == SpaceType.empty): #sometimes (eg. escaping upcoming trail) we don't want softBlocks in our path
                 newStartDistance = currentSpace.startDistance + 1
                 notInOpenSet = not (newSpace in openSet)
 
@@ -145,11 +146,14 @@ def moveTo(gameState,space):
 def chooseMove(gameState):
     # returns a command to move to the next space if we are in danger of an explosion Trail, or None if we are safe
     def escapeTrail():
+        from bomberman.constants import username,devkey,qualifierURL,rankedURL,gameID,playerID,boardSize,board
         # if we are not currently on a space that is slated to contain a trail, we don't need to do anything
         #print(board)
         if (not board[int(gameState['player']['x'])][int(gameState['player']['y'])].containsUpcomingTrail):
             return None
-        escapePath = findPath(board[int(gameState['player']['x'])][int(gameState['player']['y'])],"containsUpcomingTrail",False)
+        escapePath = findPath(board[int(gameState['player']['x'])][int(gameState['player']['y'])],"containsUpcomingTrail",False,allowSoftBlocks=False)
+        print("escape path: ")
+        print(escapePath)
         '''escapePath.pop() # pop last element as this will always be startSpace
         if (len(escapePath) == 0):
             escapePath = None'''
@@ -167,14 +171,17 @@ def chooseMove(gameState):
 
     # returns a command to move to the next space in order to approach the opponent, or a bomb command if in range to hit opponent
     def approachOpponent():
+        from bomberman.constants import username,devkey,qualifierURL,rankedURL,gameID,playerID,boardSize,board
         approachPath = findPath(board[int(gameState['player']['x'])][int(gameState['player']['y'])],"containsOpponent")
         '''approachPath.pop() # pop last element as this will always be startSpace
         if (len(approachPath) == 0):
             approachPath = None'''
+        print("approach path: ")
         print(approachPath)
-        print(board[int(gameState['player']['x'])][int(gameState['player']['y'])])
+        #print(board[int(gameState['player']['x'])][int(gameState['player']['y'])])
         if (approachPath == None): # todo: we should probably do something here even though we couldn't find a path to approach (this state may be unreachable though depending on implementation)
             return ''
+        print(approachPath[-1].type)
         if (not approachPath[-1].containsTrail):
             if (approachPath[-1].type == SpaceType.softBlock or approachPath[-1].containsOpponent): # place a bomb if we are right next to a soft block or the opponent
                 return "b" # todo: this assumes that we currently have a bomb available. Account for case when we do not have any bombs available to use
