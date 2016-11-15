@@ -124,7 +124,13 @@ def findPath(startSpace, desiredProperty, desiredState = True, returnAllSolution
                     newSpace.parents.append(currentSpace)
                     newSpace.startDistance = newStartDistance
                     if (notInOpenSet): # if newSpace does not yet exist in the open set, insert it into the appropriate position using a binary search
+                        #print("before:")
+                        #print(openSet)
+                        openSet = openSet[::-1] # todo: replace bisectRight with bisectLeft and then delete these reversals
                         openSet.insert(bisectRightKey(openSet,newSpace,key="startDistance"),newSpace)
+                        openSet = openSet[::-1]
+                        #print("after:")
+                        #print(openSet)
 
     if (len(solutions) == 0):
         return None # if solutions is None then that means that no path was found to a space satisfying desiredProperty
@@ -154,6 +160,7 @@ def chooseMove(gameState):
         escapePath = findPath(board[int(gameState['player']['x'])][int(gameState['player']['y'])],"containsUpcomingTrail",False,allowSoftBlocks=False)
         print("escape path: ")
         print(escapePath)
+        print(board[4][1].containsUpcomingTrail)
         '''escapePath.pop() # pop last element as this will always be startSpace
         if (len(escapePath) == 0):
             escapePath = None'''
@@ -182,7 +189,7 @@ def chooseMove(gameState):
         if (approachPath == None): # todo: we should probably do something here even though we couldn't find a path to approach (this state may be unreachable though depending on implementation)
             return ''
         print(approachPath[-1].type)
-        if (not approachPath[-1].containsTrail):
+        if (not (approachPath[-1].containsTrail or approachPath[-1].containsUpcomingTrail)): #don't approach into a trail OR an upcoming trail todo: check number of ticks on upcoming trail instead
             if (approachPath[-1].type == SpaceType.softBlock or approachPath[-1].containsOpponent): # place a bomb if we are right next to a soft block or the opponent
                 return "b" # todo: this assumes that we currently have a bomb available. Account for case when we do not have any bombs available to use
                 return ''
