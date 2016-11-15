@@ -1,5 +1,9 @@
 """basic AI designed to overcome basic, common circumstances in order to beat random the qualifier bot"""
-import requests
+import requests #needed to send and receive data from the server
+import json #allows us to test the game at a single point in time by reading / writing JSON data to a file
+import os.path #allows us to check if JSON file exists before attempting to read data from it when in debug mode
+
+debugMode = True #flag which instructs the program to write gameState to JSON file each turn for future processing
 
 from bomberman.space import *
 from bomberman.constants import *
@@ -137,7 +141,7 @@ def findPath(startSpace, desiredProperty, desiredState = True, returnAllSolution
 
             # attempt to keep branching from newSpace as long as it is a walkable type
             # todo: adjust weighting when encountering soft blocks, as blowing them up will take multiple turns
-            if ((newSpace.type in [SpaceType.empty, SpaceType.softBlock])):
+            if ((newSpace.type in (SpaceType.empty, SpaceType.softBlock))):
                 newStartDistance = currentSpace.startDistance + 1
                 notInOpenSet = not (newSpace in openSet)
                 print("not in open set? " + notInOpenSet)
@@ -219,25 +223,41 @@ def chooseMove(gameState):
     return move if move != None else approachOpponent()
 
 def main():
-    gameMode = input("Enter 1 for qualifier bot, 2 for ranked MM, anything else to abort: ").strip()
-    if (not (gameMode == "1" or gameMode == "2")):
-        raise Exception("Error: Invalid Game Mode. Aborting.")
+    gameMode = input("Enter 0 for json file, 1 for qualifier bot, 2 for ranked MM, anything else to abort: ").strip()
+    if (not (gameMode in ("0","1","2"))):
+        raise Exception("Error: Invalid Game Mode.")
 
-    r = requests.post(qualifierURL if gameMode == "1" else rankedURL, data={'devkey': devkey, 'username': username}) #  search for new game
-    json = r.json() #  when request comes back, that means you've found a match! (validation if server goes down?)
-    print(json)
-
-    setInitialConstants(json)
-
+    #special mode: generate a single move by reading gameState from JSON file
+    if (gameMode == "0"):
+        if (not os.path.isfile("gameState.txt")): #verify that the gameState file actually exists before trying to open it
+            raise Exception("Error: game state file 'gameState.txt' does not exist.")
+        with open('gameState.txt') as infile: 
+            jsonData = json.load(infile)
+        
+        print(jsonData)
+        setInitialConstants(jsonData)
+        print(gameID)
+        print(playerID)
+        moveChoice = chooseMove(jsonData)
+        print("move choice: " + moveChoice)
+        return
+        
+    r = requests.post(qualifierURL if gameMode == "1" else rankedURL, data={'devkey': devkey, 'username': username}) # search for new game
+    jsonData = r.json() # when request comes back, that means you've found a match! (validation if server goes down?)
+    print(jsonData)
+    setInitialConstants(jsonData)
     print(gameID)
     print(playerID)
     output = {'state': 'in progress'}
     while output['state'] != 'complete':
-        moveChoice = chooseMove(json) # todo: we should actually calculate a move here based on board / game state
-        r = requests.post('http://aicomp.io/api/games/submit/' + gameID, data={'playerID': playerID, 'move': moveChoice, 'devkey': devkey}) #  submit sample move
-        json = r.json()
-        print(json)
-        output = json
+        if (debugMode): #when debug mode is enabled, we output the current game state to gameState.txt each turn
+            with open('gameState.txt', 'w') as outfile:
+                json.dump(jsonData, outfile)
+        moveChoice = chooseMove(jsonData)
+        r = requests.post('http://aicomp.io/api/games/submit/' + gameID, data={'playerID': playerID, 'move': moveChoice, 'devkey': devkey}) # submit sample move
+        jsonData = r.json()
+        print(jsonData)
+        output = jsonData
 
 if __name__ == "__main__": # follow python standard practice in case we decide to run the module from somewhere else
     main()

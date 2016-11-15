@@ -24,7 +24,7 @@ def checkBombAffectedCoords(x,y,bombPierce,bombRange):
                 affectedCoords.append((curX,curY))
                 print("curX: " + str(curX) + ", curY: " + str(curY))
                 print(board)
-                if (board[curX][curY].type in [SpaceType.softBlock, SpaceType.hardBlock]):
+                if (board[curX][curY].type in (SpaceType.softBlock, SpaceType.hardBlock)):
                     curPierce -= 1
                     if (curPierce < 0):
                         break
