@@ -9,6 +9,7 @@ SpaceType = Enum("SpaceType", "empty softBlock hardBlock")
 # get a list of all coords that will be hit by the bomb at position x,y
 # note that this will fail without the board in the global namespace (currently maintained by ratchetAI and included in const.py)
 def checkBombAffectedCoords(x,y,bombPierce,bombRange):
+    from .constants import board,boardSize
     print("'check bomb affected' called. board state: ")
     print(board)
     affectedCoords = [(x,y)] #  the bomb square itself will be hit no matter what
@@ -48,7 +49,6 @@ class Space():
 
         # set type according to gameState
         def checkType():
-            print(board)
             '''print(self.y*boardSize + self.x)
             if (int(gameState['hardBlockBoard'][self.y*boardSize + self.x]) != 1):
                 print("found not hard block")'''

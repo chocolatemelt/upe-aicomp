@@ -161,7 +161,7 @@ def chooseMove(gameState):
     # returns a command to move to the next space if we are in danger of an explosion Trail, or None if we are safe
     def escapeTrail():
         # if we are not currently on a space that is slated to contain a trail, we don't need to do anything
-        print(board)
+        #print(board)
         if (not board[int(gameState['player']['x'])][int(gameState['player']['y'])].containsUpcomingTrail):
             return None
         escapePath = findPath(board[int(gameState['player']['x'])][int(gameState['player']['y'])],"containsUpcomingTrail",False)
@@ -186,7 +186,7 @@ def chooseMove(gameState):
         approachPath.pop() # pop last element as this will always be startSpace
         if (len(approachPath) == 0):
             approachPath = None
-        print(approachPath)
+        #print(approachPath)
         if (approachPath == None): # todo: we should probably do something here even though we couldn't find a path to approach (this state may be unreachable though depending on implementation)
             return ''
         if (not approachPath[-1].containsTrail):
@@ -215,10 +215,12 @@ def main():
         with open('gameState.txt') as infile: 
             jsonData = json.load(infile)
         
+        print("json data: ")
         print(jsonData)
         setInitialConstants(jsonData)
-        print(gameID)
-        print(playerID)
+        from bomberman.constants import username,devkey,qualifierURL,rankedURL,gameID,playerID,boardSize,board
+        print("gameID: " + gameID)
+        print("playerID: " + playerID)
         moveChoice = chooseMove(jsonData)
         print("move choice: " + moveChoice)
         return
@@ -227,6 +229,7 @@ def main():
     jsonData = r.json() # when request comes back, that means you've found a match! (validation if server goes down?)
     print(jsonData)
     setInitialConstants(jsonData)
+    from bomberman.constants import username,devkey,qualifierURL,rankedURL,gameID,playerID,boardSize,board
     print(gameID)
     print(playerID)
     output = {'state': 'in progress'}
