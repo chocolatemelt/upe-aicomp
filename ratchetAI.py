@@ -12,45 +12,30 @@ try:
 except:
     pass
 
-def binarySearch(a, x, key, leftMost = False, lo = 0, hi = None):
+def bisectRightKey(a, x, lo=0, hi=None, key = None):
     """Return the index where to insert item x in list a, assuming a is sorted.
+
     The return value i is such that all e in a[:i] have e <= x, and all e in
     a[i:] have e > x.  So if x already appears in the list, a.insert(x) will
     insert just after the rightmost x already there.
 
     Optional args lo (default 0) and hi (default len(a)) bound the
-    slice of a to be searched."""
-    if (hi == None):
+    slice of a to be searched.
+    """
+    if lo < 0:
+        raise ValueError('lo must be non-negative')
+    if hi is None:
         hi = len(a)
-    if (key != None):
-        x = getattr(x, key)
-
-    if (leftMost):
-        while (lo < hi):
-            mid = (lo+hi)//2
-            if (key == None):
-                value = a[mid]
-            else:
-                value = getattr(a[mid], key)
-
-            if (x <= value):
-                hi = mid
-            else:
-                lo = mid+1
-
-    else:
-        while (lo < hi):
-            mid = (lo+hi)//2
-            if (key == None):
-                value = a[mid]
-            else:
-                value = getattr(a[mid], key)
-
-            if (x < value):
-                hi = mid
-            else:
-                lo = mid+1
-
+    if key != None:
+        x = x.__getattribute__(key)
+    while lo < hi:
+        mid = (lo+hi)//2
+        if key == None:
+            value = a[mid]
+        else:
+            value = a[mid].__getattribute__(key)
+        if x < value: hi = mid
+        else: lo = mid+1
     return lo
 
 # find shortest path from startSpace to a space satisfying desiredProperty (note: path goes from end to start, not from start to end)
@@ -138,7 +123,7 @@ def findPath(startSpace, desiredProperty, desiredState = True, returnAllSolution
                     newSpace.parents.append(currentSpace)
                     newSpace.startDistance = newStartDistance
                     if (notInOpenSet): # if newSpace does not yet exist in the open set, insert it into the appropriate position using a binary search
-                        openSet.insert(binarySearch(openSet,newSpace,"startDistance",True),newSpace)
+                        openSet.insert(bisectRightKey(openSet,newSpace,key="startDistance"),newSpace)
 
     if (len(solutions) == 0):
         return None # if solutions is None then that means that no path was found to a space satisfying desiredProperty
@@ -165,9 +150,9 @@ def chooseMove(gameState):
         if (not board[int(gameState['player']['x'])][int(gameState['player']['y'])].containsUpcomingTrail):
             return None
         escapePath = findPath(board[int(gameState['player']['x'])][int(gameState['player']['y'])],"containsUpcomingTrail",False)
-        escapePath.pop() # pop last element as this will always be startSpace
+        '''escapePath.pop() # pop last element as this will always be startSpace
         if (len(escapePath) == 0):
-            escapePath = None
+            escapePath = None'''
         if (escapePath == None): # todo: we should probably do something here even though we couldn't find a path to escape
             return ''
         if (not escapePath[-1].containsTrail):
@@ -183,10 +168,11 @@ def chooseMove(gameState):
     # returns a command to move to the next space in order to approach the opponent, or a bomb command if in range to hit opponent
     def approachOpponent():
         approachPath = findPath(board[int(gameState['player']['x'])][int(gameState['player']['y'])],"containsOpponent")
-        approachPath.pop() # pop last element as this will always be startSpace
+        '''approachPath.pop() # pop last element as this will always be startSpace
         if (len(approachPath) == 0):
-            approachPath = None
-        #print(approachPath)
+            approachPath = None'''
+        print(approachPath)
+        print(board[int(gameState['player']['x'])][int(gameState['player']['y'])])
         if (approachPath == None): # todo: we should probably do something here even though we couldn't find a path to approach (this state may be unreachable though depending on implementation)
             return ''
         if (not approachPath[-1].containsTrail):
@@ -225,6 +211,7 @@ def main():
         print("move choice: " + moveChoice)
         return
         
+    from bomberman.constants import username,devkey,qualifierURL,rankedURL,gameID,playerID,boardSize,board
     r = requests.post(qualifierURL if gameMode == "1" else rankedURL, data={'devkey': devkey, 'username': username}) # search for new game
     jsonData = r.json() # when request comes back, that means you've found a match! (validation if server goes down?)
     print(jsonData)
