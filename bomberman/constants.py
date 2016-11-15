@@ -1,5 +1,4 @@
-import bomberman.space as sp
-
+from .space import Space
 # networking constants
 username = "kzhaaang"
 devkey = "5823b8c404d7ce4a44c37ab4"
@@ -29,7 +28,7 @@ def populateBoard(gameState):
     # first create all spaces
     for i in range(boardSize):
         for r in range(boardSize):
-            board[r].append(sp.Space(gameState,r,i))
+            board[r].append(Space(gameState,r,i))
     # now check space properties that require an initialized board
     for i in range(boardSize):
         for r in range(boardSize):

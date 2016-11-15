@@ -5,8 +5,12 @@ import os.path #allows us to check if JSON file exists before attempting to read
 
 debugMode = True #flag which instructs the program to write gameState to JSON file each turn for future processing
 
-import bomberman.constants as game
 from bomberman.space import *
+
+try:
+    from bomberman.constants import username,devkey,qualifierURL,rankedURL,gameID,playerID,boardSize,board,populateBoard,setInitialConstants
+except:
+    pass
 
 def binarySearch(a, x, key, leftMost = False, lo = 0, hi = None):
     """Return the index where to insert item x in list a, assuming a is sorted.
@@ -51,17 +55,18 @@ def binarySearch(a, x, key, leftMost = False, lo = 0, hi = None):
 
 # find shortest path from startSpace to a space satisfying desiredProperty (note: path goes from end to start, not from start to end)
 def findPath(startSpace, desiredProperty, desiredState = True, returnAllSolutions = False):
+    from bomberman.constants import username,devkey,qualifierURL,rankedURL,gameID,playerID,boardSize,board
     # return a list of all valid adjacent spaces (left, right, up, and down)
     def getAdjacentSpaces(space):
         adjacentSpaces = []
         if (space.x > 0):
-            adjacentSpaces.append(game.board[space.x-1][space.y])
+            adjacentSpaces.append(board[space.x-1][space.y])
         if (space.y > 0):
-            adjacentSpaces.append(game.board[space.x][space.y-1])
-        if (space.x < game.boardSize - 1):
-            adjacentSpaces.append(game.board[space.x+1][space.y])
-        if (space.y < game.boardSize - 1):
-            adjacentSpaces.append(game.board[space.x][space.y+1])
+            adjacentSpaces.append(board[space.x][space.y-1])
+        if (space.x < boardSize - 1):
+            adjacentSpaces.append(board[space.x+1][space.y])
+        if (space.y < boardSize - 1):
+            adjacentSpaces.append(board[space.x][space.y+1])
         return adjacentSpaces
 
     # are the goal conditions met by this space?
@@ -156,10 +161,10 @@ def chooseMove(gameState):
     # returns a command to move to the next space if we are in danger of an explosion Trail, or None if we are safe
     def escapeTrail():
         # if we are not currently on a space that is slated to contain a trail, we don't need to do anything
-        print(game.board)
-        if (not game.board[int(gameState['player']['x'])][int(gameState['player']['y'])].containsUpcomingTrail):
+        print(board)
+        if (not board[int(gameState['player']['x'])][int(gameState['player']['y'])].containsUpcomingTrail):
             return None
-        escapePath = findPath(game.board[int(gameState['player']['x'])][int(gameState['player']['y'])],"containsUpcomingTrail",False)
+        escapePath = findPath(board[int(gameState['player']['x'])][int(gameState['player']['y'])],"containsUpcomingTrail",False)
         escapePath.pop() # pop last element as this will always be startSpace
         if (len(escapePath) == 0):
             escapePath = None
@@ -177,7 +182,7 @@ def chooseMove(gameState):
 
     # returns a command to move to the next space in order to approach the opponent, or a bomb command if in range to hit opponent
     def approachOpponent():
-        approachPath = findPath(game.board[int(gameState['player']['x'])][int(gameState['player']['y'])],"containsOpponent")
+        approachPath = findPath(board[int(gameState['player']['x'])][int(gameState['player']['y'])],"containsOpponent")
         approachPath.pop() # pop last element as this will always be startSpace
         if (len(approachPath) == 0):
             approachPath = None
@@ -193,8 +198,8 @@ def chooseMove(gameState):
         # todo: we should probably do something here even though the next space in our path is currently lethal
             return ''
         # todo: perform some basic pathfinding here to get to the shortest path to the opponent (where blocks add a large, temp constant (eg. 15))
-
-    game.populateBoard(gameState)
+    populateBoard(gameState)
+    from bomberman.constants import username,devkey,qualifierURL,rankedURL,gameID,playerID,boardSize,board
     move = escapeTrail()
     return move if move != None else approachOpponent()
 
@@ -211,26 +216,26 @@ def main():
             jsonData = json.load(infile)
         
         print(jsonData)
-        game.setInitialConstants(jsonData)
-        print(game.gameID)
-        print(game.playerID)
+        setInitialConstants(jsonData)
+        print(gameID)
+        print(playerID)
         moveChoice = chooseMove(jsonData)
         print("move choice: " + moveChoice)
         return
         
-    r = requests.post(game.qualifierURL if gameMode == "1" else game.rankedURL, data={'devkey': game.devkey, 'username': game.username}) # search for new game
+    r = requests.post(qualifierURL if gameMode == "1" else rankedURL, data={'devkey': devkey, 'username': username}) # search for new game
     jsonData = r.json() # when request comes back, that means you've found a match! (validation if server goes down?)
     print(jsonData)
-    game.setInitialConstants(jsonData)
-    print(game.gameID)
-    print(game.playerID)
+    setInitialConstants(jsonData)
+    print(gameID)
+    print(playerID)
     output = {'state': 'in progress'}
     while output['state'] != 'complete':
         if (debugMode): #when debug mode is enabled, we output the current game state to gameState.txt each turn
             with open('gameState.txt', 'w') as outfile:
                 json.dump(jsonData, outfile)
         moveChoice = chooseMove(jsonData)
-        r = requests.post('http://aicomp.io/api/games/submit/' + game.gameID, data={'playerID': game.playerID, 'move': moveChoice, 'devkey': game.devkey}) # submit sample move
+        r = requests.post('http://aicomp.io/api/games/submit/' + gameID, data={'playerID': playerID, 'move': moveChoice, 'devkey': devkey}) # submit sample move
         jsonData = r.json()
         print(jsonData)
         output = jsonData
