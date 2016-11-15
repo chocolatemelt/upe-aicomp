@@ -10,29 +10,6 @@ def setInitialConstants(gameState):
     playerID = gameState['playerID']
     boardSize = int(gameState['boardSize'])
 
-# get a list of all coords that will be hit by the bomb at position x,y
-def checkBombAffectedCoords(x,y,bombPierce,bombRange):
-    affectedCoords = [(x,y)] #  the bomb square itself will be hit no matter what
-    # check negative x (left) then positive x (right) squares, then negative y (up) and then finally positive y (down) squares
-    for direction in range(-1, 6, 2):
-        curPierce = bombPierce
-        curX = x
-        curY = y
-        for _ in range(bombRange):
-            if (direction <= 1):
-                curX += direction
-            else:
-                curY += direction-4 # offset of 4 so that -1 -> 1 account for x increments, and 3 -> 5 (minus 4) account for y increments
-            if curX >= 0 and curX < boardSize and curY >= 0 and curY < boardSize:
-                affectedCoords.append((curX,curY))
-                print("curX: " + str(curX) + ", curY: " + str(curY))
-                print(board)
-                if (board[curX][curY].type in [SpaceType.softBlock, SpaceType.hardBlock]):
-                    curPierce -= 1
-                    if (curPierce < 0):
-                        break
-    return affectedCoords
-
 # populates a 2d-list of 'Space' objects which contain information about what they contain, as well as whether or not they are in range of an explosion Trail
 # todo: currently assumes 0 pierce
 def populateBoard(gameState):
@@ -131,6 +108,7 @@ def findPath(startSpace, desiredProperty, desiredState = True, returnAllSolution
 
         # main inner iteration: check each space in adjacentSpaces for validity
         for newSpace in adjacentSpaces:
+            print(newSpace)
             # if returnAllSolutions is True and we have surpassed finalPathDistance, check if current solution is less optimal, in which case exit immediately
             if ((finalPathDistance != -1) and (currentSpace.startDistance + 1 > finalPathDistance)):
                 return solutions
@@ -161,7 +139,8 @@ def findPath(startSpace, desiredProperty, desiredState = True, returnAllSolution
             # todo: adjust weighting when encountering soft blocks, as blowing them up will take multiple turns
             if ((newSpace.type in [SpaceType.empty, SpaceType.softBlock])):
                 newStartDistance = currentSpace.startDistance + 1
-                notInOpenSet = not newSpace in openSet
+                notInOpenSet = not (newSpace in openSet)
+                print("not in open set? " + notInOpenSet)
 
                 # don't bother with newSpace if it has already been visited unless our new distance from the start space is smaller than its existing startDistance
                 if ((newSpace in closedSet) and (newSpace.startDistance < newStartDistance)):

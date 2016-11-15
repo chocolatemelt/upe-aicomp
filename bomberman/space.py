@@ -4,6 +4,32 @@ from .constants import *
 # Enum of valid spaces
 SpaceType = Enum("SpaceType", "empty softBlock hardBlock")
 
+# get a list of all coords that will be hit by the bomb at position x,y
+# note that this will fail without the board in the global namespace (currently maintained by ratchetAI and included in constants.py)
+def checkBombAffectedCoords(x,y,bombPierce,bombRange):
+    print("'check bomb affected' called. board state: ")
+    print(board)
+    affectedCoords = [(x,y)] #  the bomb square itself will be hit no matter what
+    # check negative x (left) then positive x (right) squares, then negative y (up) and then finally positive y (down) squares
+    for direction in range(-1, 6, 2):
+        curPierce = bombPierce
+        curX = x
+        curY = y
+        for _ in range(bombRange):
+            if (direction <= 1):
+                curX += direction
+            else:
+                curY += direction-4 # offset of 4 so that -1 -> 1 account for x increments, and 3 -> 5 (minus 4) account for y increments
+            if curX >= 0 and curX < boardSize and curY >= 0 and curY < boardSize:
+                affectedCoords.append((curX,curY))
+                print("curX: " + str(curX) + ", curY: " + str(curY))
+                print(board)
+                if (board[curX][curY].type in [SpaceType.softBlock, SpaceType.hardBlock]):
+                    curPierce -= 1
+                    if (curPierce < 0):
+                        break
+    return affectedCoords
+
 # basic class containing info on a single unit space, including what that space is, and whether or not it is in range of an upcoming or active explosion Trail
 class Space():
     def __str__(self):
@@ -20,10 +46,10 @@ class Space():
         # set type according to gameState
         def checkType():
             if (int(gameState['hardBlockBoard'][self.y*boardSize + self.x]) == 1):
-                return SpaceType.empty
+                return SpaceType.hardBlock
             if (int(gameState['softBlockBoard'][self.y*boardSize + self.x]) == 1):
                 return SpaceType.softBlock
-            return SpaceType.hardBlock
+            return SpaceType.empty
 
         # set whether or not a bomb is currently on this space
         def checkContainsBomb():
