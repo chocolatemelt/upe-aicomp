@@ -1,14 +1,13 @@
 from enum import Enum
-from .constants import *
-
+import bomberman.constants
 # Enum of valid spaces
 SpaceType = Enum("SpaceType", "empty softBlock hardBlock")
 
 # get a list of all coords that will be hit by the bomb at position x,y
-# note that this will fail without the board in the global namespace (currently maintained by ratchetAI and included in constants.py)
+# note that this will fail without the board in the global namespace (currently maintained by ratchetAI and included in const.py)
 def checkBombAffectedCoords(x,y,bombPierce,bombRange):
     print("'check bomb affected' called. board state: ")
-    print(board)
+    print(bomberman.constants.board)
     affectedCoords = [(x,y)] #  the bomb square itself will be hit no matter what
     # check negative x (left) then positive x (right) squares, then negative y (up) and then finally positive y (down) squares
     for direction in range(-1, 6, 2):
@@ -20,11 +19,11 @@ def checkBombAffectedCoords(x,y,bombPierce,bombRange):
                 curX += direction
             else:
                 curY += direction-4 # offset of 4 so that -1 -> 1 account for x increments, and 3 -> 5 (minus 4) account for y increments
-            if curX >= 0 and curX < boardSize and curY >= 0 and curY < boardSize:
+            if curX >= 0 and curX < bomberman.constants.boardSize and curY >= 0 and curY < bomberman.constants.boardSize:
                 affectedCoords.append((curX,curY))
                 print("curX: " + str(curX) + ", curY: " + str(curY))
-                print(board)
-                if (board[curX][curY].type in (SpaceType.softBlock, SpaceType.hardBlock)):
+                print(bomberman.constants.board)
+                if (bomberman.constants.board[curX][curY].type in (SpaceType.softBlock, SpaceType.hardBlock)):
                     curPierce -= 1
                     if (curPierce < 0):
                         break
@@ -45,9 +44,13 @@ class Space():
 
         # set type according to gameState
         def checkType():
-            if (int(gameState['hardBlockBoard'][self.y*boardSize + self.x]) == 1):
+            print(bomberman.constants.board)
+            '''print(self.y*boardSize + self.x)
+            if (int(gameState['hardBlockBoard'][self.y*boardSize + self.x]) != 1):
+                print("found not hard block")'''
+            if (int(gameState['hardBlockBoard'][self.y*bomberman.constants.boardSize + self.x]) == 1):
                 return SpaceType.hardBlock
-            if (int(gameState['softBlockBoard'][self.y*boardSize + self.x]) == 1):
+            if (int(gameState['softBlockBoard'][self.y*bomberman.constants.boardSize + self.x]) == 1):
                 return SpaceType.softBlock
             return SpaceType.empty
 

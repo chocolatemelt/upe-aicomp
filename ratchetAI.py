@@ -5,31 +5,8 @@ import os.path #allows us to check if JSON file exists before attempting to read
 
 debugMode = True #flag which instructs the program to write gameState to JSON file each turn for future processing
 
+import bomberman.constants as game
 from bomberman.space import *
-from bomberman.constants import *
-
-def setInitialConstants(gameState):
-    global gameID, playerID, boardSize
-    gameID = gameState['gameID']
-    playerID = gameState['playerID']
-    boardSize = int(gameState['boardSize'])
-
-# populates a 2d-list of 'Space' objects which contain information about what they contain, as well as whether or not they are in range of an explosion Trail
-# todo: currently assumes 0 pierce
-def populateBoard(gameState):
-    global board
-    board = []
-    for i in range(boardSize):
-        board.append([])
-    # first create all spaces
-    for i in range(boardSize):
-        for r in range(boardSize):
-            board[r].append(Space(gameState,r,i))
-    # now check space properties that require an initialized board
-    for i in range(boardSize):
-        for r in range(boardSize):
-            board[r][i].initializeLateProperties(gameState)
-
 
 def binarySearch(a, x, key, leftMost = False, lo = 0, hi = None):
     """Return the index where to insert item x in list a, assuming a is sorted.
@@ -78,13 +55,13 @@ def findPath(startSpace, desiredProperty, desiredState = True, returnAllSolution
     def getAdjacentSpaces(space):
         adjacentSpaces = []
         if (space.x > 0):
-            adjacentSpaces.append(board[space.x-1][space.y])
+            adjacentSpaces.append(game.board[space.x-1][space.y])
         if (space.y > 0):
-            adjacentSpaces.append(board[space.x][space.y-1])
-        if (space.x < boardSize - 1):
-            adjacentSpaces.append(board[space.x+1][space.y])
-        if (space.y < boardSize - 1):
-            adjacentSpaces.append(board[space.x][space.y+1])
+            adjacentSpaces.append(game.board[space.x][space.y-1])
+        if (space.x < game.boardSize - 1):
+            adjacentSpaces.append(game.board[space.x+1][space.y])
+        if (space.y < game.boardSize - 1):
+            adjacentSpaces.append(game.board[space.x][space.y+1])
         return adjacentSpaces
 
     # are the goal conditions met by this space?
@@ -112,7 +89,6 @@ def findPath(startSpace, desiredProperty, desiredState = True, returnAllSolution
 
         # main inner iteration: check each space in adjacentSpaces for validity
         for newSpace in adjacentSpaces:
-            print(newSpace)
             # if returnAllSolutions is True and we have surpassed finalPathDistance, check if current solution is less optimal, in which case exit immediately
             if ((finalPathDistance != -1) and (currentSpace.startDistance + 1 > finalPathDistance)):
                 return solutions
@@ -144,7 +120,6 @@ def findPath(startSpace, desiredProperty, desiredState = True, returnAllSolution
             if ((newSpace.type in (SpaceType.empty, SpaceType.softBlock))):
                 newStartDistance = currentSpace.startDistance + 1
                 notInOpenSet = not (newSpace in openSet)
-                print("not in open set? " + notInOpenSet)
 
                 # don't bother with newSpace if it has already been visited unless our new distance from the start space is smaller than its existing startDistance
                 if ((newSpace in closedSet) and (newSpace.startDistance < newStartDistance)):
@@ -181,9 +156,10 @@ def chooseMove(gameState):
     # returns a command to move to the next space if we are in danger of an explosion Trail, or None if we are safe
     def escapeTrail():
         # if we are not currently on a space that is slated to contain a trail, we don't need to do anything
-        if (not board[int(gameState['player']['x'])][int(gameState['player']['y'])].containsUpcomingTrail):
+        print(game.board)
+        if (not game.board[int(gameState['player']['x'])][int(gameState['player']['y'])].containsUpcomingTrail):
             return None
-        escapePath = findPath(board[int(gameState['player']['x'])][int(gameState['player']['y'])],"containsUpcomingTrail",False)
+        escapePath = findPath(game.board[int(gameState['player']['x'])][int(gameState['player']['y'])],"containsUpcomingTrail",False)
         escapePath.pop() # pop last element as this will always be startSpace
         if (len(escapePath) == 0):
             escapePath = None
@@ -201,12 +177,12 @@ def chooseMove(gameState):
 
     # returns a command to move to the next space in order to approach the opponent, or a bomb command if in range to hit opponent
     def approachOpponent():
-        approachPath = findPath(board[int(gameState['player']['x'])][int(gameState['player']['y'])],"containsOpponent")
+        approachPath = findPath(game.board[int(gameState['player']['x'])][int(gameState['player']['y'])],"containsOpponent")
         approachPath.pop() # pop last element as this will always be startSpace
         if (len(approachPath) == 0):
             approachPath = None
         print(approachPath)
-        if (approachPath == None): # todo: we should probably do something here even though we couldn't find a path to approach (this state may be unreachable though depending on implementatino)
+        if (approachPath == None): # todo: we should probably do something here even though we couldn't find a path to approach (this state may be unreachable though depending on implementation)
             return ''
         if (not approachPath[-1].containsTrail):
             if (approachPath[-1].type == SpaceType.softBlock or approachPath[-1].containsOpponent): # place a bomb if we are right next to a soft block or the opponent
@@ -218,7 +194,7 @@ def chooseMove(gameState):
             return ''
         # todo: perform some basic pathfinding here to get to the shortest path to the opponent (where blocks add a large, temp constant (eg. 15))
 
-    populateBoard(gameState)
+    game.populateBoard(gameState)
     move = escapeTrail()
     return move if move != None else approachOpponent()
 
@@ -235,26 +211,26 @@ def main():
             jsonData = json.load(infile)
         
         print(jsonData)
-        setInitialConstants(jsonData)
-        print(gameID)
-        print(playerID)
+        game.setInitialConstants(jsonData)
+        print(game.gameID)
+        print(game.playerID)
         moveChoice = chooseMove(jsonData)
         print("move choice: " + moveChoice)
         return
         
-    r = requests.post(qualifierURL if gameMode == "1" else rankedURL, data={'devkey': devkey, 'username': username}) # search for new game
+    r = requests.post(game.qualifierURL if gameMode == "1" else game.rankedURL, data={'devkey': game.devkey, 'username': game.username}) # search for new game
     jsonData = r.json() # when request comes back, that means you've found a match! (validation if server goes down?)
     print(jsonData)
-    setInitialConstants(jsonData)
-    print(gameID)
-    print(playerID)
+    game.setInitialConstants(jsonData)
+    print(game.gameID)
+    print(game.playerID)
     output = {'state': 'in progress'}
     while output['state'] != 'complete':
         if (debugMode): #when debug mode is enabled, we output the current game state to gameState.txt each turn
             with open('gameState.txt', 'w') as outfile:
                 json.dump(jsonData, outfile)
         moveChoice = chooseMove(jsonData)
-        r = requests.post('http://aicomp.io/api/games/submit/' + gameID, data={'playerID': playerID, 'move': moveChoice, 'devkey': devkey}) # submit sample move
+        r = requests.post('http://aicomp.io/api/games/submit/' + game.gameID, data={'playerID': game.playerID, 'move': moveChoice, 'devkey': game.devkey}) # submit sample move
         jsonData = r.json()
         print(jsonData)
         output = jsonData
