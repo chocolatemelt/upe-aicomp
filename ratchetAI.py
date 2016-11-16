@@ -140,7 +140,8 @@ def findPath(startSpace, desiredProperty, desiredState = True, returnAllSolution
 
             # attempt to keep branching from newSpace as long as it is a walkable type
             # todo: adjust weighting when encountering soft blocks, as blowing them up will take multiple turns
-            if (allowOpponent or newSpace.containsOpponent == False) and (((newSpace.type in (SpaceType.empty, SpaceType.softBlock)) and allowSoftBlocks) or newSpace.type == SpaceType.empty): #sometimes (eg. escaping upcoming trail) we don't want softBlocks in our path
+            if (allowOpponent or newSpace.containsOpponent == False) and (newSpace.containsBomb == False) and \
+            (((newSpace.type in (SpaceType.empty, SpaceType.softBlock)) and allowSoftBlocks) or newSpace.type == SpaceType.empty): #sometimes (eg. escaping upcoming trail) we don't want softBlocks in our path
                 newStartDistance = currentSpace.startDistance + 1
                 notInOpenSet = not (newSpace in openSet)
 
@@ -220,6 +221,20 @@ def chooseMove(gameState):
     move = escapeTrail()
     return move if move != None else approachOpponent()
 
+def startGame(jsonData):
+    print("json data: ",end='')
+    print(jsonData)
+    setInitialConstants(jsonData)
+    print("gameID: " + gameID)
+    print("playerID: " + playerID)
+
+#print ascii art representing the board
+def printBoard():
+    for i in range(boardSize):
+        for j in range(boardSize):
+            print(board[j][i].getState(),end=" ")
+        print()
+
 def main():
     gameMode = input("Enter 0 for json file, 1 for qualifier bot, 2 for ranked MM, anything else to abort: ").strip()
     if (not (gameMode in ("0","1","2"))):
@@ -231,29 +246,22 @@ def main():
             raise Exception("Error: game state file 'gameState.txt' does not exist.")
         with open('gameState.txt') as infile: 
             jsonData = json.load(infile)
-        
-        print("json data: ",end='')
-        print(jsonData)
-        setInitialConstants(jsonData)
-        print("gameID: " + gameID)
-        print("playerID: " + playerID)
+        startGame(jsonData)
         moveChoice = chooseMove(jsonData)
+        printBoard()
         print("move choice: " + moveChoice)
         return
         
     r = requests.post(qualifierURL if gameMode == "1" else rankedURL, data={'devkey': devkey, 'username': username}) # search for new game
     jsonData = r.json() # when request comes back, that means you've found a match! (validation if server goes down?)
-    print("json data: ",end='')
-    print(jsonData)
-    setInitialConstants(jsonData)
-    print("gameID: " + gameID)
-    print("playerID: " + playerID)
+    startGame(jsonData)
     output = {'state': 'in progress'}
     while output['state'] != 'complete':
         if (debugMode): #when debug mode is enabled, we output the current game state to gameState.txt each turn
             with open('gameState.txt', 'w') as outfile:
                 json.dump(jsonData, outfile)
         moveChoice = chooseMove(jsonData)
+        printBoard()
         print("move choice: " + moveChoice)
         r = requests.post('http://aicomp.io/api/games/submit/' + gameID, data={'playerID': playerID, 'move': moveChoice, 'devkey': devkey}) # submit sample move
         jsonData = r.json()

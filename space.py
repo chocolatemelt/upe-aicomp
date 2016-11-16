@@ -27,7 +27,7 @@ def checkBombAffectedCoords(x,y,bombPierce,bombRange,board,boardSize):
 # basic class containing info on a single unit space, including what that space is, and whether or not it is in range of an upcoming or active explosion Trail
 class Space():
     def __str__(self):
-        return str(self.type).split(".")[1] + " at: " + str(self.x) + ", " + str(self.y)
+        return self.getState() + " at: " + str(self.x) + ", " + str(self.y)
 
     def __repr__(self):
         return self.__str__()
@@ -71,6 +71,32 @@ class Space():
         self.containsBomb = checkContainsBomb()
         self.containsTrail = checkContainsTrail()
         self.containsPlayer,self.containsOpponent = checkContainsEitherPlayer()
+        
+    #print a 3-character representation of this Space's current state
+    def getState(self):
+        returnString = ""
+        if (self.type == SpaceType.hardBlock):
+            returnString += "X"
+        if (self.type == SpaceType.softBlock):
+            returnString += "x"
+        if (self.containsBomb):
+            returnString += "B"
+        if (self.containsOpponent):
+            returnString += "O"
+        if (self.containsPlayer):
+            returnString += "P"
+        if (self.containsTrail):
+            returnString += "*"
+        if (self.containsUpcomingTrail):
+            returnString += "~"
+        if (returnString == ""):
+            returnString = "-"
+        if (len(returnString) == 1):
+            returnString = " " + returnString + " "
+        else:
+            returnString = returnString[1] + returnString[0] + returnString[1]
+        return returnString
+        
 
     def initializeLateProperties(self,gameState,board,boardSize):
         # set whether or not an explosion Trail will soon be on this space
