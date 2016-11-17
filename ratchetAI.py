@@ -142,7 +142,7 @@ def findPath(startSpace, desiredProperty, desiredState = True, returnAllSolution
             # todo: adjust weighting when encountering soft blocks, as blowing them up will take multiple turns
             if (allowOpponent or newSpace.containsOpponent == False) and (newSpace.containsBomb == False) and \
             (((newSpace.type in (SpaceType.empty, SpaceType.softBlock)) and allowSoftBlocks) or newSpace.type == SpaceType.empty): #sometimes (eg. escaping upcoming trail) we don't want softBlocks in our path
-                newStartDistance = currentSpace.startDistance + 1
+                newStartDistance = currentSpace.startDistance + (10 if newSpace.type == SpaceType.softBlock else 1) #weigh soft blocks as taking 10 moves, as they need to be blown up todo: 10 is a temp value!
                 notInOpenSet = not (newSpace in openSet)
 
                 # don't bother with newSpace if it has already been visited unless our new distance from the start space is smaller than its existing startDistance
@@ -228,7 +228,7 @@ def startGame(jsonData):
     print("gameID: " + gameID)
     print("playerID: " + playerID)
 
-#print ascii art representing the board
+#print ascii art representation of the board
 def printBoard():
     for i in range(boardSize):
         for j in range(boardSize):
