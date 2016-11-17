@@ -16,7 +16,6 @@ rankedURL = "http://aicomp.io/api/games/search" # ranked matchmaking vs other AI
 gameID = '' # id of current game session
 playerID = '' # player number
 boardSize = -1 # number of units in grid row or column
-board = [] # game board (to be re-populated each turn)
 
 #initializes several global constants at gameStart
 def setInitialConstants(gameState):
@@ -28,7 +27,6 @@ def setInitialConstants(gameState):
 # populates a 2d-list of 'Space' objects which contain information about what they contain, as well as whether or not they are in range of an explosion Trail
 # todo: currently assumes 0 pierce
 def populateBoard(gameState):
-    global board
     board = []
     for i in range(boardSize):
         board.append([])
@@ -40,6 +38,7 @@ def populateBoard(gameState):
     for i in range(boardSize):
         for r in range(boardSize):
             board[r][i].initializeLateProperties(gameState,board,boardSize)
+    return board
 
 def bisectRightKey(a, x, lo=0, hi=None, key = None):
     """Return the index where to insert item x in list a, assuming a is sorted.
@@ -68,7 +67,7 @@ def bisectRightKey(a, x, lo=0, hi=None, key = None):
     return lo
 
 # find shortest path from startSpace to a space satisfying desiredProperty (note: path goes from end to start, not from start to end)
-def findPath(startSpace, desiredProperty, desiredState = True, returnAllSolutions = False, allowSoftBlocks = True, destinationCanBeSolidBlock = False,destinationCanBeBomb = False, allowOpponent=True):
+def findPath(board,startSpace, desiredProperty, desiredState = True, returnAllSolutions = False, allowSoftBlocks = True, destinationCanBeSolidBlock = False,destinationCanBeBomb = False, allowOpponent=True):
     # return a list of all valid adjacent spaces (left, right, up, and down)
     def getAdjacentSpaces(space):
         adjacentSpaces = []
@@ -178,13 +177,13 @@ def moveTo(gameState,space):
     return '' # if space is not adjacent to the player in one of the four cardinal directions, we cannot move to it
 
 # called once per frame. re-populates board, then calls submethods to determine move choice
-def chooseMove(gameState):
+def chooseMove(board,gameState):
     # returns a command to move to the next space if we are in danger of an explosion Trail, or None if we are safe
     def escapeTrail():
         # if we are not currently on a space that is slated to contain a trail, we don't need to do anything
         if (not board[int(gameState['player']['x'])][int(gameState['player']['y'])].containsUpcomingTrail):
             return None
-        escapePath = findPath(board[int(gameState['player']['x'])][int(gameState['player']['y'])],"containsUpcomingTrail",False,allowSoftBlocks=False,allowOpponent=False)
+        escapePath = findPath(board,board[int(gameState['player']['x'])][int(gameState['player']['y'])],"containsUpcomingTrail",False,allowSoftBlocks=False,allowOpponent=False)
         print("escape path: ",end='')
         print(escapePath)
         print("next block is " + str(escapePath[-1]))
@@ -202,7 +201,7 @@ def chooseMove(gameState):
 
     # returns a command to move to the next space in order to approach the opponent, or a bomb command if in range to hit opponent
     def approachOpponent():
-        approachPath = findPath(board[int(gameState['player']['x'])][int(gameState['player']['y'])],"containsOpponent")
+        approachPath = findPath(board,board[int(gameState['player']['x'])][int(gameState['player']['y'])],"containsOpponent")
         print("approach path: ",end='')
         print(approachPath)
         print("next block is " + str(approachPath[-1]))
@@ -217,7 +216,6 @@ def chooseMove(gameState):
         # todo: we should probably do something here even though the next space in our path is currently lethal
             return ''
         # (old note): perform some basic pathfinding here to get to the shortest path to the opponent (where blocks add a large, temp constant (eg. 15))
-    populateBoard(gameState)
     move = escapeTrail()
     return move if move != None else approachOpponent()
 
@@ -230,7 +228,7 @@ def startGame(jsonData):
     print("playerID: " + playerID)
 
 #print ascii art representation of the board
-def printBoard():
+def printBoard(board):
     for i in range(boardSize):
         for j in range(boardSize):
             print(board[j][i].getState(),end=" ")
@@ -248,8 +246,9 @@ def main():
         with open('gameState.txt') as infile: 
             jsonData = json.load(infile)
         startGame(jsonData)
-        moveChoice = chooseMove(jsonData)
-        printBoard()
+        board = populateBoard(jsonData)
+        moveChoice = chooseMove(board,jsonData)
+        printBoard(board)
         print("move choice: " + moveChoice)
         return
         
@@ -261,8 +260,9 @@ def main():
         if (debugMode): #when debug mode is enabled, we output the current game state to gameState.txt each turn
             with open('gameState.txt', 'w') as outfile:
                 json.dump(jsonData, outfile)
-        moveChoice = chooseMove(jsonData)
-        printBoard()
+        board = populateBoard(jsonData)
+        moveChoice = chooseMove(board,jsonData)
+        printBoard(board)
         print("move choice: " + moveChoice)
         r = requests.post('http://aicomp.io/api/games/submit/' + gameID, data={'playerID': playerID, 'move': moveChoice, 'devkey': devkey}) # submit sample move
         jsonData = r.json()
