@@ -76,7 +76,7 @@ class Space():
     def getState(self):
         returnString = ""
         if (self.type == SpaceType.hardBlock):
-            returnString += "X"
+            returnString += "|"
         if (self.type == SpaceType.softBlock):
             returnString += "x"
         if (self.containsBomb):
