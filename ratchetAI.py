@@ -3,7 +3,7 @@ from space import Space, SpaceType #custom space class containing information ab
 import utilities as util#several misc functions that are unrelated to functionality or not specific to AI
 
 def chooseMove(board,gameState):
-    """called once per frame. re-populates board, then calls submethods to determine move choice"""
+    """called once per turn. Calls either escapeTrail or approachOpponent to determine move choice"""
     def escapeTrail():
         """returns a command to move to the next space if we are in danger of an explosion Trail, or None if we are safe"""
         # if we are not currently on a space that is slated to contain a trail, we don't need to do anything

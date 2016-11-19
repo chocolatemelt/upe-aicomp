@@ -45,15 +45,15 @@ def selectGameMode():
         raise Exception("Error: Invalid Game Mode.")
     return gameMode
 
-def moveTo(gameState,space):
+def moveTo(gameState,space,player = "player"):
     """return the correct move name to instruct our player to move to the desired space"""
-    if (space.x > int(gameState['player']['x'])):
+    if (space.x > int(gameState[player]['x'])):
         return "mr"
-    if (space.x < int(gameState['player']['x'])):
+    if (space.x < int(gameState[player]['x'])):
         return "ml"
-    if (space.y > int(gameState['player']['y'])):
+    if (space.y > int(gameState[player]['y'])):
         return "md"
-    if (space.y < int(gameState['player']['y'])):
+    if (space.y < int(gameState[player]['y'])):
         return "mu"
     return '' # if space is not adjacent to the player in one of the four cardinal directions, we cannot move to it
 
@@ -72,6 +72,46 @@ def populateBoard(gameState):
         for r in range(boardSize):
             board[r][i].initializeLateProperties(gameState,board)
     return board
+
+def calculateBlockPlacementCost(boardSize, desiredSpace):
+    """determine the coin cost to purchase a block placement at the selected position.
+    Note: placement cost has a minimum of 1!"""
+    return min(((boardSize - 1 - desiredSpace.x) * desiredSpace.x * (boardSize - 1 - desiredSpace.y) * desiredSpace.y * 10 / ((boardSize - 1)**4 / 16))//2,1) 
+
+def findPortalBlock(board,startSpace,direction):
+    """find the block that a fired portal will land on starting at startSpace and traveling in direction"""
+    curSpace = startSpace
+    while (not (curSpace.type == SpaceType.softBlock or curSpace.type == SpaceType.hardBlock)): #here we assume that the boad is surrounded by walls (ie. this cannot infinite loop)
+        curSpace = getAdjacentSpaces(board,curSpace,direction)
+    return curSpace
+
+def moveValid(board,gameState, move,player = "player"):
+    """determine if the given move is valid for the selected player given the board and gameState.
+    Note: moves that are valid but will not affect the gameState in any way return False!"""
+    if move == (''):
+        return True
+    if (move in ("ml","mu","mr","md")):
+        #translate move command to direction string, and feed that into getAdjacentSpaces
+        space = getAdjacentSpaces(board, board[int(gameState[player]['x'])][int(gameState[player]['y'])], ("left","up","right","down")[("ml","mu","mr","md").index(move)])
+        return space != None and space.type == SpaceType.empty
+    if (move in ("tl","tu","tr","td")):
+        #disallow turning to the current facing direction (directions: left = 0, up = 1, right = 2, down = 3)
+        return ("tl","tu","tr","td")[int(gameState[player]["direction"])] != move
+    if (move == "b"):
+        #make sure the selected player has a bomb and is not currently sitting on top of a bomb
+        return int(board[player]["bombCount"]) > 0 and board[int(gameState[player]['x'])][int(gameState[player]['y'])].containsBomb == False
+    if (move in ('buy_count', 'buy_range', 'buy_pierce')):
+        #make sure the selected player has enough money to purchase the selected upgrade
+        return gameState[player].coins >= 5
+    if (move == "op" or move == "bp"):
+        #verify that the block that this portal will land on does not already contain the same colored portal from this player 
+        portalBlock = findPortalBlock(board,board[int(gameState[player]['x'])][int(gameState[player]['y'])],("left","up","right","down")[int(gameState[player]["direction"])])
+        return not (int(gameState[player]["orangePortal"]["x"]) == portalBlock.x and int(gameState[player]["orangePortal" if move == "op" else "bluePortal"]["y"]) == portalBlock.y)
+        
+    if (move == "buy_block"):
+        #determine the selected player's facing space, and then make sure the player has enough coins to place a block there if the space is empty
+        facingSpace = getAdjacentSpaces(board, board[int(gameState[player]['x'])][int(gameState[player]['y'])], ("left","up","right","down")[int(gameState[player]["direction"])])
+        return facingSpace != None and facingSpace.type == SpaceType.empty and gameState[player].coins >= calculateBlockPlacementCost(len(board),facingSpace) 
 
 def getAdjacentSpaces(board,space,direction="all"):
         """return a list of all valid adjacent spaces (directionections specified as left, right, up, and down)"""
@@ -154,7 +194,6 @@ def findPath(board,startSpace, desiredProperty, desiredState = True, returnAllSo
                             pathsFound[len(pathsFound)-1].append(pathsFound[0][len(pathsFound[0])-1].parents[i])
 
             # attempt to keep branching from newSpace as long as it is a walkable type
-            # todo: adjust weighting when encountering soft blocks, as blowing them up will take multiple turns
             if (allowOpponent or newSpace.containsOpponent == False) and (newSpace.containsBomb == False) and \
             (((newSpace.type in (SpaceType.empty, SpaceType.softBlock)) and allowSoftBlocks) or newSpace.type == SpaceType.empty): #sometimes (eg. escaping upcoming trail) we don't want softBlocks in our path
                 newStartDistance = currentSpace.startDistance + (softBlockWeight if newSpace.type == SpaceType.softBlock else 1) #weigh soft blocks as taking 10 moves, as they need to be blown up todo: 10 is a temp value!
