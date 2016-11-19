@@ -4,7 +4,8 @@ SpaceType = Enum("SpaceType", "empty softBlock hardBlock")
 
 # get a list of all coords that will be hit by the bomb at position x,y
 # note that this will fail without the board in the global namespace (currently maintained by ratchetAI and included in const.py)
-def checkBombAffectedCoords(x,y,bombPierce,bombRange,board,boardSize):
+def checkBombAffectedCoords(x,y,bombPierce,bombRange,board):
+    boardSize = len(board)
     affectedCoords = [(x,y)] #  the bomb square itself will be hit no matter what
     # check negative x (left) then positive x (right) squares, then negative y (up) and then finally positive y (down) squares
     for direction in range(-1, 6, 2):
@@ -32,7 +33,8 @@ class Space():
     def __repr__(self):
         return self.__str__()
 
-    def __init__(self,gameState,x,y,board,boardSize):
+    def __init__(self,gameState,x,y,board):
+        boardSize = len(board)
         # set whether or not the player or the opponent is currently on this space
         def checkContainsEitherPlayer():
             return int(gameState['player']['x']) == self.x and int(gameState['player']['y']) == self.y, int(gameState['opponent']['x']) == self.x and int(gameState['opponent']['y']) == self.y
@@ -98,7 +100,8 @@ class Space():
         return returnString
         
 
-    def initializeLateProperties(self,gameState,board,boardSize):
+    def initializeLateProperties(self,gameState,board):
+        boardSize = len(board)
         # set whether or not an explosion Trail will soon be on this space
         def checkContainsUpcomingTrail():
             # todo: repeat code from checkContainsBomb
@@ -114,7 +117,7 @@ class Space():
                 else:
                     bombPierce = gameState['opponent']['bombPierce']
                     bombRange = gameState['opponent']['bombRange']
-                bombAffectedCoords = checkBombAffectedCoords(bombX,bombY,bombPierce,bombRange,board,boardSize)
+                bombAffectedCoords = checkBombAffectedCoords(bombX,bombY,bombPierce,bombRange,board)
                 if ((self.x,self.y) in bombAffectedCoords):
                     return (True,bombTurnsRemaining)
             return (False,-1)

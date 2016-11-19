@@ -59,18 +59,18 @@ def moveTo(gameState,space):
 
 def populateBoard(gameState):
     """populates a 2d-list of 'Space' objects which contain information about what they contain, as well as whether or not they are in range of an explosion Trail"""
-    boardSize = int(gameState['boardSize'])
+    boardSize = int(gameState['boardSize']) # number of units in grid row or column
     board = []
     for i in range(boardSize):
         board.append([])
     # first create all spaces
     for i in range(boardSize):
         for r in range(boardSize):
-            board[r].append(Space(gameState,r,i,board,boardSize))
+            board[r].append(Space(gameState,r,i,board))
     # now check space properties that require an initialized board
     for i in range(boardSize):
         for r in range(boardSize):
-            board[r][i].initializeLateProperties(gameState,board,boardSize)
+            board[r][i].initializeLateProperties(gameState,board)
     return board
 
 def getAdjacentSpaces(board,space,direction="all"):
@@ -86,12 +86,19 @@ def getAdjacentSpaces(board,space,direction="all"):
             adjacentSpaces.append(board[space.x][space.y+1])
         return None if len(adjacentSpaces) == 0 else adjacentSpaces[0] if direction != "all" else adjacentSpaces
     
+def startGame(jsonData):
+    """set constants at game start and print some data"""
+    gameID,playerID = (jsonData['gameID'],jsonData['playerID']) # store id of current game session, and player number
+    print("json data:",jsonData)
+    print("gameID: {0}\nplayerID: {1}".format(gameID, playerID))
+    return gameID,playerID
+    
 def findPath(board,startSpace, desiredProperty, desiredState = True, returnAllSolutions = False, allowSoftBlocks = True, destinationCanBeSolidBlock = False,
              destinationCanBeBomb = False, allowOpponent=True,softBlockWeight=10):
     """find shortest path from startSpace to a space satisfying desiredProperty (note: path goes from end to start, not from start to end)"""
 
-    # are the goal conditions met by this space?
     def conditionMet(space):
+        """are the goal conditions met by this space?"""
         return (True if destinationCanBeSolidBlock else space.type != SpaceType.hardBlock) and \
             (True if destinationCanBeBomb else space.containsBomb == False) and \
             (True if allowSoftBlocks else space.type != SpaceType.softBlock) and \
