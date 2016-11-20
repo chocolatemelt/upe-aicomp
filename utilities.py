@@ -106,12 +106,18 @@ def moveValid(board,gameState, move,player = "player"):
     if (move == "op" or move == "bp"):
         #verify that the block that this portal will land on does not already contain the same colored portal from this player 
         portalBlock = findPortalBlock(board,board[int(gameState[player]['x'])][int(gameState[player]['y'])],("left","up","right","down")[int(gameState[player]["direction"])])
-        return not (int(gameState[player]["orangePortal"]["x"]) == portalBlock.x and int(gameState[player]["orangePortal" if move == "op" else "bluePortal"]["y"]) == portalBlock.y)
+        if gameState[player]["orangePortal" if move == "op" else "bluePortal"] == None: #if the portal is not yet placed, we guarantee that we are not overriding it
+            return True
+        return not (int(gameState[player]["orangePortal" if move == "op" else "bluePortal"]["x"]) == portalBlock.x and int(gameState[player]["orangePortal" if move == "op" else "bluePortal"]["y"]) == portalBlock.y)
         
     if (move == "buy_block"):
         #determine the selected player's facing space, and then make sure the player has enough coins to place a block there if the space is empty
         facingSpace = getAdjacentSpaces(board, board[int(gameState[player]['x'])][int(gameState[player]['y'])], ("left","up","right","down")[int(gameState[player]["direction"])])
         return facingSpace != None and facingSpace.type == SpaceType.empty and gameState[player].coins >= calculateBlockPlacementCost(len(board),facingSpace) 
+
+def applyMove(board,gameState, move, player = "player"):
+    """make the appropriate changes to board and gameState in order to apply move for selected player"""
+    pass
 
 def getAdjacentSpaces(board,space,direction="all"):
         """return a list of all valid adjacent spaces (directionections specified as left, right, up, and down)"""

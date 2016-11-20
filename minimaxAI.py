@@ -4,6 +4,9 @@ import utilities as util#several misc functions that are unrelated to functional
 
 def chooseMove(board,gameState): # todo: put move selection logic here
     """called each turn. generates tree of potential future gameStates, then selects the Node leading to the least loss"""
+    def calculateScore(board,gameState):
+        """generate a score for the given board and gameState"""
+        pass
     #full list of moves (copied from sampleAI)
     possibleMoves = ['mu', 'ml', 'mr', 'md', 'tu', 'tl', 'tr', 'td', 'b', '', 'op', 'bp', 'buy_count', 'buy_range', 'buy_pierce', 'buy_block']
     return ""
