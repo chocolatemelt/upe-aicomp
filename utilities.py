@@ -96,31 +96,31 @@ def moveValid(board,gameState, move,player = "player"):
         return space != None and space.type == SpaceType.empty
     if (move in ("tl","tu","tr","td")):
         #disallow turning to the current facing direction (directions: left = 0, up = 1, right = 2, down = 3)
-        return ("tl","tu","tr","td")[int(gameState[player]["direction"])] != move
+        return ("tl","tu","tr","td")[int(gameState[player]["orientation"])] != move
     if (move == "b"):
         #make sure the selected player has a bomb and is not currently sitting on top of a bomb
-        return int(board[player]["bombCount"]) > 0 and board[int(gameState[player]['x'])][int(gameState[player]['y'])].containsBomb == False
+        return int(gameState[player]["bombCount"]) > 0 and board[int(gameState[player]['x'])][int(gameState[player]['y'])].containsBomb == False
     if (move in ('buy_count', 'buy_range', 'buy_pierce')):
         #make sure the selected player has enough money to purchase the selected upgrade
-        return gameState[player].coins >= 5
+        return gameState[player]["coins"] >= 5
     if (move == "op" or move == "bp"):
         #verify that the block that this portal will land on does not already contain the same colored portal from this player 
-        portalBlock = findPortalBlock(board,board[int(gameState[player]['x'])][int(gameState[player]['y'])],("left","up","right","down")[int(gameState[player]["direction"])])
+        portalBlock = findPortalBlock(board,board[int(gameState[player]['x'])][int(gameState[player]['y'])],("left","up","right","down")[int(gameState[player]["orientation"])])
         if gameState[player]["orangePortal" if move == "op" else "bluePortal"] == None: #if the portal is not yet placed, we guarantee that we are not overriding it
             return True
         return not (int(gameState[player]["orangePortal" if move == "op" else "bluePortal"]["x"]) == portalBlock.x and int(gameState[player]["orangePortal" if move == "op" else "bluePortal"]["y"]) == portalBlock.y)
         
     if (move == "buy_block"):
         #determine the selected player's facing space, and then make sure the player has enough coins to place a block there if the space is empty
-        facingSpace = getAdjacentSpaces(board, board[int(gameState[player]['x'])][int(gameState[player]['y'])], ("left","up","right","down")[int(gameState[player]["direction"])])
-        return facingSpace != None and facingSpace.type == SpaceType.empty and gameState[player].coins >= calculateBlockPlacementCost(len(board),facingSpace) 
+        facingSpace = getAdjacentSpaces(board, board[int(gameState[player]['x'])][int(gameState[player]['y'])], ("left","up","right","down")[int(gameState[player]["orientation"])])
+        return facingSpace != None and facingSpace.type == SpaceType.empty and gameState[player]["coins"] >= calculateBlockPlacementCost(len(board),facingSpace) 
 
 def applyMove(board,gameState, move, player = "player"):
     """make the appropriate changes to board and gameState in order to apply move for selected player"""
     pass
 
 def getAdjacentSpaces(board,space,direction="all"):
-        """return a list of all valid adjacent spaces (directionections specified as left, right, up, and down)"""
+        """return a list of all valid adjacent spaces (direction specified as left, right, up, and down)"""
         adjacentSpaces = []
         if (direction in ("left","all") and space.x > 0):
             adjacentSpaces.append(board[space.x-1][space.y])
