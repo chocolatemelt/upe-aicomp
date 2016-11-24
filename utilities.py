@@ -85,6 +85,16 @@ def findPortalBlock(board,startSpace,direction):
         curSpace = getAdjacentSpaces(board,curSpace,direction)
     return curSpace
 
+def unshared_copy(inList):
+    """perform a proper deepcopy of a multi-dimensional list (function from http://stackoverflow.com/a/1601774)"""
+    if isinstance(inList, list):
+        return list( map(unshared_copy, inList) )
+    return inList
+
+def copyGame(board,gameState):
+    """generate and return a deep copy of board and gameState"""
+    return unshared_copy(board),gameState.deepcopy()
+
 def moveValid(board,gameState, move,player = "player"):
     """determine if the given move is valid for the selected player given the board and gameState.
     Note: moves that are valid but will not affect the gameState in any way return False!"""
