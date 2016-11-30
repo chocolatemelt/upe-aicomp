@@ -9,7 +9,7 @@ def chooseMove(board,gameState):
         # if we are not currently on a space that is slated to contain a trail, we don't need to do anything
         if (not board[int(gameState['player']['x'])][int(gameState['player']['y'])].containsUpcomingTrail):
             return None
-        escapePath = util.findPath(board,board[int(gameState['player']['x'])][int(gameState['player']['y'])],"containsUpcomingTrail",False,allowSoftBlocks=False,allowOpponent=False)
+        escapePath = util.findPath(gameState,board,board[int(gameState['player']['x'])][int(gameState['player']['y'])],"containsUpcomingTrail",False,allowSoftBlocks=False,allowOpponent=False)
         print("escape path: {0}\nnext block is: {1}".format(escapePath,escapePath[-1]))
         if (escapePath == None): # todo: we should probably do something here even though we couldn't find a path to escape
             return ''
@@ -17,14 +17,14 @@ def chooseMove(board,gameState):
             if (escapePath[-1].type == SpaceType.softBlock):
                 # todo: we should probably do something here even though the next space in our path is currently a soft block
                 return ''
-            return util.moveTo(gameState,escapePath[-1])
+            return util.moveTo(gameState,board,escapePath[-1])
         else:
             # todo: we should probably do something here even though the next space in our path is currently lethal
             return ''
 
     def approachOpponent():
         """returns a command to move to the next space in order to approach the opponent, or a bomb command if in range to hit opponent"""
-        approachPath = util.findPath(board,board[int(gameState['player']['x'])][int(gameState['player']['y'])],"containsOpponent")
+        approachPath = util.findPath(gameState,board,board[int(gameState['player']['x'])][int(gameState['player']['y'])],"containsOpponent")
         print("approach path: {0}\nnext block is: {1}".format(approachPath,approachPath[-1]))
         if (approachPath == None): # todo: we should probably do something here even though we couldn't find a path to approach (this state may be unreachable though depending on implementation)
             return ''
@@ -32,7 +32,7 @@ def chooseMove(board,gameState):
             if (approachPath[-1].type == SpaceType.softBlock or approachPath[-1].containsOpponent): # place a bomb if we are right next to a soft block or the opponent
                 return "b" # todo: this assumes that we currently have a bomb available. Account for case when we do not have any bombs available to use
                 return ''
-            return util.moveTo(gameState,approachPath[-1])
+            return util.moveTo(gameState,board,approachPath[-1])
         else:
         # todo: we should probably do something here even though the next space in our path is currently lethal
             return ''

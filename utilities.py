@@ -4,6 +4,7 @@ Created on Nov 18, 2016
 @author: Ryan
 '''
 from space import Space, SpaceType
+from portalUtilities import *
 
 def bisectRightKey(a, x, lo=0, hi=None, key = None):
     """Return the index where to insert item x in list a, assuming a is sorted.
@@ -45,16 +46,36 @@ def selectGameMode():
         raise Exception("Error: Invalid Game Mode.")
     return gameMode
 
-def moveTo(gameState,space,player = "player"):
+def moveTo(gameState,board,space,player = "player"):
     """return the correct move name to instruct our player to move to the desired space"""
-    if (space.x > int(gameState[player]['x'])):
+    if (space.x - int(gameState[player]['x']) == 1):
         return "mr"
-    if (space.x < int(gameState[player]['x'])):
+    if (space.x - int(gameState[player]['x']) == -1):
         return "ml"
-    if (space.y > int(gameState[player]['y'])):
+    if (space.y - int(gameState[player]['y']) == 1):
         return "md"
-    if (space.y < int(gameState[player]['y'])):
+    if (space.y - int(gameState[player]['y']) == -1):
         return "mu"
+    #check if moving to the space can be achieved by using a portal
+    boardSize = len(board)
+    playerX = int(gameState[player]['x'])
+    playerY = int(gameState[player]['y'])
+    if (playerX < boardSize - 1):
+        dest = canTraversePortal(board,gameState,board[playerX][playerY],board[playerX+1][playerY])
+        if dest[1] == space:
+            return "mr"
+    if (playerX > 0):
+        dest = canTraversePortal(board,gameState,board[playerX][playerY],board[playerX-1][playerY])
+        if dest[1] == space:
+            return "ml"
+    if (playerY < boardSize - 1):
+        dest = canTraversePortal(board,gameState,board[playerX][playerY],board[playerX][playerY+1])
+        if dest[1] == space:
+            return "md"
+    if (playerY > 0):
+        dest = canTraversePortal(board,gameState,board[playerX][playerY],board[playerX][playerY-1])
+        if dest[1] == space:
+            return "mu"
     return '' # if space is not adjacent to the player in one of the four cardinal directions, we cannot move to it
 
 def populateBoard(gameState):
@@ -129,19 +150,6 @@ def applyMove(board,gameState, move, player = "player"):
     """make the appropriate changes to board and gameState in order to apply move for selected player"""
     pass
 
-def getAdjacentSpaces(board,space,direction="all"):
-        """return a list of all valid adjacent spaces (direction specified as left, right, up, and down)"""
-        adjacentSpaces = []
-        if (direction in ("left","all") and space.x > 0):
-            adjacentSpaces.append(board[space.x-1][space.y])
-        if (direction in ("up","all") and space.y > 0):
-            adjacentSpaces.append(board[space.x][space.y-1])
-        if (direction in ("right","all") and space.x < len(board) - 1):
-            adjacentSpaces.append(board[space.x+1][space.y])
-        if (direction in ("down","all") and space.y < len(board) - 1):
-            adjacentSpaces.append(board[space.x][space.y+1])
-        return None if len(adjacentSpaces) == 0 else adjacentSpaces[0] if direction != "all" else adjacentSpaces
-    
 def startGame(jsonData):
     """set constants at game start and print some data"""
     gameID,playerID = (jsonData['gameID'],jsonData['playerID']) # store id of current game session, and player number
@@ -149,10 +157,10 @@ def startGame(jsonData):
     print("gameID: {0}\nplayerID: {1}".format(gameID, playerID))
     return gameID,playerID
     
-def findPath(board,startSpace, desiredProperty, desiredState = True, returnAllSolutions = False, allowSoftBlocks = True, destinationCanBeSolidBlock = False,
+def findPath(gameState,board,startSpace, desiredProperty, desiredState = True, returnAllSolutions = False, allowSoftBlocks = True, destinationCanBeSolidBlock = False,
              destinationCanBeBomb = False, allowOpponent=True,softBlockWeight=10):
     """find shortest path from startSpace to a space satisfying desiredProperty (note: path goes from end to start, not from start to end)"""
-
+    #todo: this will recognize the existence of portals, but makes no attempt to place portals as part of the pathfinding
     def conditionMet(space):
         """are the goal conditions met by this space?"""
         return (True if destinationCanBeSolidBlock else space.type != SpaceType.hardBlock) and \
@@ -186,6 +194,10 @@ def findPath(board,startSpace, desiredProperty, desiredState = True, returnAllSo
             # if returnAllSolutions is True and we have surpassed finalPathDistance, exit immediately
             if ((finalPathDistance != -1) and (currentSpace.startDistance + 1 > finalPathDistance)):
                 return solutions
+            
+            canTraverse = canTraversePortal(board,gameState,currentSpace,newSpace)
+            if (canTraverse[0]): #if the current block is a wall with a portal on it, re-assign it to the destination block 
+                newSpace = canTraverse[1] 
 
             # if the newSpace is a goal, find a path back to startSpace (or all equal paths if returnAllSolutions is True)
             if conditionMet(newSpace):
