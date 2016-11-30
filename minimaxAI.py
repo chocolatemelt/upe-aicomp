@@ -6,6 +6,7 @@ numFutureTurns = 3 #how many turns into the future should the minimaxAI search
 
 def chooseMove(board,gameState): # todo: put move selection logic here
     """called each turn. generates tree of potential future gameStates, then selects the Node leading to the least loss"""
+
     def calculateScore(board,gameState):
         """generate a score for the given board and gameState"""
         pass

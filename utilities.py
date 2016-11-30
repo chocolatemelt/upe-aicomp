@@ -234,3 +234,7 @@ def findPath(board,startSpace, desiredProperty, desiredState = True, returnAllSo
     if (len(solutions) == 0):
         return None # if solutions is None then that means that no path was found to a space satisfying desiredProperty with desiredState
     return solutions
+
+def goodbombSpot(board, gameState):
+    
+    return True
