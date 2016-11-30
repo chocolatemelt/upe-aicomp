@@ -8,7 +8,7 @@ import ratchetAI as ratchet #basic AI which operates by approaching the opponent
 import minimaxAI as minimax #smarter AI which operates by generating a tree of future gameStates, and selecting the Node which leads to the least loss
 
 debugMode = True #flag which instructs the program to write gameState to JSON file each turn for future processing
-AIMode = "minimax"
+AIMode = "ratchet"
 
 # initialize global networking constants
 username = "kzhaaang"
@@ -30,7 +30,7 @@ def main():
         moveChoice = eval(AIMode + ".chooseMove(board,jsonData)")
         print("move choice:", moveChoice)
         return
-        
+
     jsonData = requests.post(qualifierURL if gameMode == "1" else rankedURL, data={'devkey': devkey, 'username': username}).json() # search for new game
     # when request comes back, that means you've found a match! (validation if server goes down?)
     gameID,playerID = util.startGame(jsonData)
