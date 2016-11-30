@@ -5,6 +5,10 @@ Created on Nov 18, 2016
 '''
 from space import Space, SpaceType
 
+def applyMove(board,gameState, move, player = "player"):
+    """make the appropriate changes to board and gameState in order to apply move for selected player"""
+    pass
+
 def bisectRightKey(a, x, lo=0, hi=None, key = None):
     """Return the index where to insert item x in list a, assuming a is sorted.
 
@@ -31,124 +35,15 @@ def bisectRightKey(a, x, lo=0, hi=None, key = None):
         else: lo = mid+1
     return lo
 
-def printBoard(board):
-    """print ascii art representation of the 2D list of Spaces board"""
-    for i in range(len(board)):
-        for j in range(len(board)):
-            print(board[j][i].getState(),end=" ")
-        print()
-
-def selectGameMode():
-    """request game mode as input. Raises Exception for invalid mode selection"""
-    gameMode = input("Enter 0 for json file, 1 for qualifier bot, 2 for ranked MM, anything else to abort: ").strip()
-    if (not (gameMode in ("0","1","2"))):
-        raise Exception("Error: Invalid Game Mode.")
-    return gameMode
-
-def moveTo(gameState,space,player = "player"):
-    """return the correct move name to instruct our player to move to the desired space"""
-    if (space.x > int(gameState[player]['x'])):
-        return "mr"
-    if (space.x < int(gameState[player]['x'])):
-        return "ml"
-    if (space.y > int(gameState[player]['y'])):
-        return "md"
-    if (space.y < int(gameState[player]['y'])):
-        return "mu"
-    return '' # if space is not adjacent to the player in one of the four cardinal directions, we cannot move to it
-
-def populateBoard(gameState):
-    """populates a 2d-list of 'Space' objects which contain information about what they contain, as well as whether or not they are in range of an explosion Trail"""
-    boardSize = int(gameState['boardSize']) # number of units in grid row or column
-    board = []
-    for i in range(boardSize):
-        board.append([])
-    # first create all spaces
-    for i in range(boardSize):
-        for r in range(boardSize):
-            board[r].append(Space(gameState,r,i,board))
-    # now check space properties that require an initialized board
-    for i in range(boardSize):
-        for r in range(boardSize):
-            board[r][i].initializeLateProperties(gameState,board)
-    return board
-
 def calculateBlockPlacementCost(boardSize, desiredSpace):
     """determine the coin cost to purchase a block placement at the selected position.
     Note: placement cost has a minimum of 1!"""
-    return min(((boardSize - 1 - desiredSpace.x) * desiredSpace.x * (boardSize - 1 - desiredSpace.y) * desiredSpace.y * 10 / ((boardSize - 1)**4 / 16))//2,1) 
-
-def findPortalBlock(board,startSpace,direction):
-    """find the block that a fired portal will land on starting at startSpace and traveling in direction"""
-    curSpace = startSpace
-    while (not (curSpace.type == SpaceType.softBlock or curSpace.type == SpaceType.hardBlock)): #here we assume that the boad is surrounded by walls (ie. this cannot infinite loop)
-        curSpace = getAdjacentSpaces(board,curSpace,direction)
-    return curSpace
-
-def unshared_copy(inList):
-    """perform a proper deepcopy of a multi-dimensional list (function from http://stackoverflow.com/a/1601774)"""
-    if isinstance(inList, list):
-        return list( map(unshared_copy, inList) )
-    return inList
+    return min(((boardSize - 1 - desiredSpace.x) * desiredSpace.x * (boardSize - 1 - desiredSpace.y) * desiredSpace.y * 10 / ((boardSize - 1)**4 / 16))//2,1)
 
 def copyGame(board,gameState):
     """generate and return a deep copy of board and gameState"""
     return unshared_copy(board),gameState.deepcopy()
 
-def moveValid(board,gameState, move,player = "player"):
-    """determine if the given move is valid for the selected player given the board and gameState.
-    Note: moves that are valid but will not affect the gameState in any way return False!"""
-    if move == (''):
-        return True
-    if (move in ("ml","mu","mr","md")):
-        #translate move command to direction string, and feed that into getAdjacentSpaces
-        space = getAdjacentSpaces(board, board[int(gameState[player]['x'])][int(gameState[player]['y'])], ("left","up","right","down")[("ml","mu","mr","md").index(move)])
-        return space != None and space.type == SpaceType.empty
-    if (move in ("tl","tu","tr","td")):
-        #disallow turning to the current facing direction (directions: left = 0, up = 1, right = 2, down = 3)
-        return ("tl","tu","tr","td")[int(gameState[player]["orientation"])] != move
-    if (move == "b"):
-        #make sure the selected player has a bomb and is not currently sitting on top of a bomb
-        return int(gameState[player]["bombCount"]) > 0 and board[int(gameState[player]['x'])][int(gameState[player]['y'])].containsBomb == False
-    if (move in ('buy_count', 'buy_range', 'buy_pierce')):
-        #make sure the selected player has enough money to purchase the selected upgrade
-        return gameState[player]["coins"] >= 5
-    if (move == "op" or move == "bp"):
-        #verify that the block that this portal will land on does not already contain the same colored portal from this player 
-        portalBlock = findPortalBlock(board,board[int(gameState[player]['x'])][int(gameState[player]['y'])],("left","up","right","down")[int(gameState[player]["orientation"])])
-        if gameState[player]["orangePortal" if move == "op" else "bluePortal"] == None: #if the portal is not yet placed, we guarantee that we are not overriding it
-            return True
-        return not (int(gameState[player]["orangePortal" if move == "op" else "bluePortal"]["x"]) == portalBlock.x and int(gameState[player]["orangePortal" if move == "op" else "bluePortal"]["y"]) == portalBlock.y)
-        
-    if (move == "buy_block"):
-        #determine the selected player's facing space, and then make sure the player has enough coins to place a block there if the space is empty
-        facingSpace = getAdjacentSpaces(board, board[int(gameState[player]['x'])][int(gameState[player]['y'])], ("left","up","right","down")[int(gameState[player]["orientation"])])
-        return facingSpace != None and facingSpace.type == SpaceType.empty and gameState[player]["coins"] >= calculateBlockPlacementCost(len(board),facingSpace) 
-
-def applyMove(board,gameState, move, player = "player"):
-    """make the appropriate changes to board and gameState in order to apply move for selected player"""
-    pass
-
-def getAdjacentSpaces(board,space,direction="all"):
-        """return a list of all valid adjacent spaces (direction specified as left, right, up, and down)"""
-        adjacentSpaces = []
-        if (direction in ("left","all") and space.x > 0):
-            adjacentSpaces.append(board[space.x-1][space.y])
-        if (direction in ("up","all") and space.y > 0):
-            adjacentSpaces.append(board[space.x][space.y-1])
-        if (direction in ("right","all") and space.x < len(board) - 1):
-            adjacentSpaces.append(board[space.x+1][space.y])
-        if (direction in ("down","all") and space.y < len(board) - 1):
-            adjacentSpaces.append(board[space.x][space.y+1])
-        return None if len(adjacentSpaces) == 0 else adjacentSpaces[0] if direction != "all" else adjacentSpaces
-    
-def startGame(jsonData):
-    """set constants at game start and print some data"""
-    gameID,playerID = (jsonData['gameID'],jsonData['playerID']) # store id of current game session, and player number
-    print("json data:",jsonData)
-    print("gameID: {0}\nplayerID: {1}".format(gameID, playerID))
-    return gameID,playerID
-    
 def findPath(board,startSpace, desiredProperty, desiredState = True, returnAllSolutions = False, allowSoftBlocks = True, destinationCanBeSolidBlock = False,
              destinationCanBeBomb = False, allowOpponent=True,softBlockWeight=10):
     """find shortest path from startSpace to a space satisfying desiredProperty (note: path goes from end to start, not from start to end)"""
@@ -233,8 +128,112 @@ def findPath(board,startSpace, desiredProperty, desiredState = True, returnAllSo
 
     if (len(solutions) == 0):
         return None # if solutions is None then that means that no path was found to a space satisfying desiredProperty with desiredState
+
+def findPortalBlock(board,startSpace,direction):
+    """find the block that a fired portal will land on starting at startSpace and traveling in direction"""
+    curSpace = startSpace
+    while (not (curSpace.type == SpaceType.softBlock or curSpace.type == SpaceType.hardBlock)): #here we assume that the boad is surrounded by walls (ie. this cannot infinite loop)
+        curSpace = getAdjacentSpaces(board,curSpace,direction)
+    return curSpace
+
+def getAdjacentSpaces(board,space,direction="all"):
+        """return a list of all valid adjacent spaces (direction specified as left, right, up, and down)"""
+        adjacentSpaces = []
+        if (direction in ("left","all") and space.x > 0):
+            adjacentSpaces.append(board[space.x-1][space.y])
+        if (direction in ("up","all") and space.y > 0):
+            adjacentSpaces.append(board[space.x][space.y-1])
+        if (direction in ("right","all") and space.x < len(board) - 1):
+            adjacentSpaces.append(board[space.x+1][space.y])
+        if (direction in ("down","all") and space.y < len(board) - 1):
+            adjacentSpaces.append(board[space.x][space.y+1])
+        return None if len(adjacentSpaces) == 0 else adjacentSpaces[0] if direction != "all" else adjacentSpaces
+
+def moveTo(gameState,space,player = "player"):
+    """return the correct move name to instruct our player to move to the desired space"""
+    if (space.x > int(gameState[player]['x'])):
+        return "mr"
+    if (space.x < int(gameState[player]['x'])):
+        return "ml"
+    if (space.y > int(gameState[player]['y'])):
+        return "md"
+    if (space.y < int(gameState[player]['y'])):
+        return "mu"
+    return '' # if space is not adjacent to the player in one of the four cardinal directions, we cannot move to it
+
+def moveValid(board,gameState, move,player = "player"):
+    """determine if the given move is valid for the selected player given the board and gameState.
+    Note: moves that are valid but will not affect the gameState in any way return False!"""
+    if move == (''):
+        return True
+    if (move in ("ml","mu","mr","md")):
+        #translate move command to direction string, and feed that into getAdjacentSpaces
+        space = getAdjacentSpaces(board, board[int(gameState[player]['x'])][int(gameState[player]['y'])], ("left","up","right","down")[("ml","mu","mr","md").index(move)])
+        return space != None and space.type == SpaceType.empty
+    if (move in ("tl","tu","tr","td")):
+        #disallow turning to the current facing direction (directions: left = 0, up = 1, right = 2, down = 3)
+        return ("tl","tu","tr","td")[int(gameState[player]["orientation"])] != move
+    if (move == "b"):
+        #make sure the selected player has a bomb and is not currently sitting on top of a bomb
+        return int(gameState[player]["bombCount"]) > 0 and board[int(gameState[player]['x'])][int(gameState[player]['y'])].containsBomb == False
+    if (move in ('buy_count', 'buy_range', 'buy_pierce')):
+        #make sure the selected player has enough money to purchase the selected upgrade
+        return gameState[player]["coins"] >= 5
+    if (move == "op" or move == "bp"):
+        #verify that the block that this portal will land on does not already contain the same colored portal from this player
+        portalBlock = findPortalBlock(board,board[int(gameState[player]['x'])][int(gameState[player]['y'])],("left","up","right","down")[int(gameState[player]["orientation"])])
+        if gameState[player]["orangePortal" if move == "op" else "bluePortal"] == None: #if the portal is not yet placed, we guarantee that we are not overriding it
+            return True
+        return not (int(gameState[player]["orangePortal" if move == "op" else "bluePortal"]["x"]) == portalBlock.x and int(gameState[player]["orangePortal" if move == "op" else "bluePortal"]["y"]) == portalBlock.y)
+
+    if (move == "buy_block"):
+        #determine the selected player's facing space, and then make sure the player has enough coins to place a block there if the space is empty
+        facingSpace = getAdjacentSpaces(board, board[int(gameState[player]['x'])][int(gameState[player]['y'])], ("left","up","right","down")[int(gameState[player]["orientation"])])
+        return facingSpace != None and facingSpace.type == SpaceType.empty and gameState[player]["coins"] >= calculateBlockPlacementCost(len(board),facingSpace)
+
+def populateBoard(gameState):
+    """populates a 2d-list of 'Space' objects which contain information about what they contain, as well as whether or not they are in range of an explosion Trail"""
+    boardSize = int(gameState['boardSize']) # number of units in grid row or column
+    board = []
+    for i in range(boardSize):
+        board.append([])
+    # first create all spaces
+    for i in range(boardSize):
+        for r in range(boardSize):
+            board[r].append(Space(gameState,r,i,board))
+    # now check space properties that require an initialized board
+    for i in range(boardSize):
+        for r in range(boardSize):
+            board[r][i].initializeLateProperties(gameState,board)
+    return board
+
+def printBoard(board):
+    """print ascii art representation of the 2D list of Spaces board"""
+    for i in range(len(board)):
+        for j in range(len(board)):
+            print(board[j][i].getState(),end=" ")
+        print()
+
+def selectGameMode():
+    """request game mode as input. Raises Exception for invalid mode selection"""
+    gameMode = input("Enter 0 for json file, 1 for qualifier bot, 2 for ranked MM, anything else to abort: ").strip()
+    if (not (gameMode in ("0","1","2"))):
+        raise Exception("Error: Invalid Game Mode.")
+    return gameMode
+
+def startGame(jsonData):
+    """set constants at game start and print some data"""
+    gameID,playerID = (jsonData['gameID'],jsonData['playerID']) # store id of current game session, and player number
+    print("json data:",jsonData)
+    print("gameID: {0}\nplayerID: {1}".format(gameID, playerID))
+    return gameID,playerID
     return solutions
 
-def goodbombSpot(board, gameState):
-    
+def unshared_copy(inList):
+    """perform a proper deepcopy of a multi-dimensional list (function from http://stackoverflow.com/a/1601774)"""
+    if isinstance(inList, list):
+        return list( map(unshared_copy, inList) )
+    return inList
+
+def goodbombSpot(board,gameState):
     return True
