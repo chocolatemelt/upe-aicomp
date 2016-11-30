@@ -7,9 +7,6 @@ is to break the soft block
 
 *more rewarding to work on soft blocks that are concentrated in an area*
 
-
-
-
 gather enough coins for one of each power-up
 prioritize bomb pierce
 
@@ -23,10 +20,8 @@ general algorithm:
  get coins
  rinse/repeat
 
-
  *only drop a bomb if we can get out of its way*
  *work towards the center*
-
 
 TO-DO:
 
