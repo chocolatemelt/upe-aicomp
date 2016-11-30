@@ -13,12 +13,8 @@ def chooseMove(board,gameState): # todo: put move selection logic here
     if (gameState['player']['bombPierce'] > 3 and gameState['player']['bomRange'] > 6):
         FarmPhase = false
 
-    # a function that returns a list of coordinates of spots reachable by foot. (maybe within 5 blocks?)
-    # a function that returns True/False for if I place a bomb, will it destroy soft-blocks
-    # a function that anticipates a trail map of a bomb placement
-
     # account for downtime, so move if you don't have any bombCount
-    # prioritize a concentrated area of blocks?, or alternate placing bombs from two different areas
+    # alternate placing bombs from two different areas
 
     if FarmPhase:
 
