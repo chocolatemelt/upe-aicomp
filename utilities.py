@@ -3,7 +3,7 @@ Created on Nov 18, 2016
 
 @author: Ryan
 '''
-from space import Space, SpaceType
+from space import Space
 from portalUtilities import *
 
 def applyMove(board,gameState, move, player = "player"):

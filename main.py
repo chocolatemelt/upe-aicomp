@@ -17,6 +17,7 @@ qualifierURL = "http://aicomp.io/api/games/practice" # practice qualifier bot
 rankedURL = "http://aicomp.io/api/games/search" # ranked matchmaking vs other AI
 
 def main():
+    """main function which handles loading up the AI each turn and communicating with the game server"""
     gameMode = util.selectGameMode()
     #special mode: generate a single move by reading gameState from JSON file
     if (gameMode == "0"):

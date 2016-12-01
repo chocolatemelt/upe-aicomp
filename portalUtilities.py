@@ -4,7 +4,7 @@ Created on Nov 29, 2016
 @author: Ryan
 '''
 from enum import Enum
-SpaceType = Enum("SpaceType", "empty softBlock hardBlock") #todo: copied from Space for now to avoid circular dependencies
+SpaceType = Enum("SpaceType", "empty softBlock hardBlock") # Enum of valid spaces
 def getAdjacentSpaces(board,space,direction="all"):
         """return a list of all valid adjacent spaces (direction specified as left, right, up, and down)"""
         adjacentSpaces = []

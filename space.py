@@ -1,11 +1,9 @@
-from enum import Enum
-# Enum of valid spaces
 import portalUtilities as portalUtil#several misc functions that are unrelated to functionality or not specific to AI
-SpaceType = Enum("SpaceType", "empty softBlock hardBlock")
+from portalUtilities import SpaceType
 
-# get a list of all coords that will be hit by the bomb at position x,y
-# note that this will fail without the board in the global namespace (currently maintained by ratchetAI and included in const.py)
 def checkBombAffectedCoords(x,y,bombPierce,bombRange,board,gameState):
+    """get a list of all coords that will be hit by the bomb at position x,y
+      note that this will fail without the board in the global namespace (currently maintained by ratchetAI and included in const.py)"""
     boardSize = len(board)
     affectedCoords = [(x,y)] #  the bomb square itself will be hit no matter what
     # check negative x (left) then positive x (right) squares, then negative y (up) and then finally positive y (down) squares
@@ -35,30 +33,34 @@ def checkBombAffectedCoords(x,y,bombPierce,bombRange,board,gameState):
                         break
     return affectedCoords
 
-# basic class containing info on a single unit space, including what that space is, and whether or not it is in range of an upcoming or active explosion Trail
 class Space():
+    """basic class containing info on a single unit space, including what that space is, and whether or not it is in range of an upcoming or active explosion Trail"""
     def __str__(self):
-        return self.getState() + " at: " + str(self.x) + ", " + str(self.y)
+        """string value of class"""
+        return self.__repr__()
 
     def __repr__(self):
-        return self.__str__()
+        """representation of class"""
+        return self.getState() + " at: " + str(self.x) + ", " + str(self.y)
 
     def __init__(self,gameState,x,y,board):
+        """constructor: init properties that do not depend on other spaces' properties"""
         boardSize = len(board)
-        # set whether or not the player or the opponent is currently on this space
+        
         def checkContainsEitherPlayer():
+            """set whether or not the player or the opponent is currently on this space"""
             return int(gameState['player']['x']) == self.x and int(gameState['player']['y']) == self.y, int(gameState['opponent']['x']) == self.x and int(gameState['opponent']['y']) == self.y
 
-        # set type according to gameState
         def checkType():
+            """set type according to gameState"""
             if (int(gameState['hardBlockBoard'][self.x*boardSize + self.y]) == 1):
                 return SpaceType.hardBlock
             if (int(gameState['softBlockBoard'][self.x*boardSize + self.y]) == 1):
                 return SpaceType.softBlock
             return SpaceType.empty
 
-        # set whether or not a bomb is currently on this space
         def checkContainsBomb():
+            """set whether or not a bomb is currently on this space"""
             bombKeys = gameState['bombMap'].keys()
             for coord in bombKeys:
                 bombX = int(coord.split(",")[0])
@@ -67,8 +69,8 @@ class Space():
                     return True
             return False
         
-        # set whether or not a portal is currently on this space
         def checkContainsPortal():
+            """set whether or not a portal is currently on this space"""
             portalKeys = gameState['portalMap'].keys()
             for coord in portalKeys:
                 portalX = int(coord.split(",")[0])
@@ -77,8 +79,8 @@ class Space():
                     return True,coord
             return False,None
 
-        # set whether or not an explosion Trail is currently on this space
         def checkContainsTrail():
+            """set whether or not an explosion Trail is currently on this space"""
             trailKeys = gameState['trailMap'].keys()
             for coord in trailKeys:
                 trailX = int(coord.split(",")[0])
@@ -95,8 +97,8 @@ class Space():
         self.containsTrail = checkContainsTrail()
         self.containsPlayer,self.containsOpponent = checkContainsEitherPlayer()
         
-    #print a 3-character representation of this Space's current state
     def getState(self):
+        """print a 3-character representation of this Space's current state"""
         returnString = ""
         if (self.type == SpaceType.hardBlock):
             returnString += "|"
@@ -120,11 +122,11 @@ class Space():
             returnString = returnString[1] + returnString[0] + returnString[1]
         return returnString
         
-
     def initializeLateProperties(self,gameState,board):
-        boardSize = len(board)
-        # set whether or not an explosion Trail will soon be on this space
+        """init properties that depend on other spaces to be initialized"""
+
         def checkContainsUpcomingTrail():
+            """set whether or not an explosion Trail will soon be on this space"""
             # todo: repeat code from checkContainsBomb
             bombKeys = gameState['bombMap'].keys()
             for coord in bombKeys:
