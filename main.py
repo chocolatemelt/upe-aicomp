@@ -30,6 +30,7 @@ def main():
         util.printBoard(board)
         moveChoice = eval(AIMode + ".chooseMove(board,jsonData)")
         print("move choice:", moveChoice)
+        print(jsonData)
         return
 
     jsonData = requests.post(qualifierURL if gameMode == "1" else rankedURL, data={'devkey': devkey, 'username': username}).json() # search for new game
