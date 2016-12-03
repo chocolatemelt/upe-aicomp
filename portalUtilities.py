@@ -30,8 +30,12 @@ def getComplementaryPortalCoord(gameState,entrancePortalCoord):
     """return the coordinates of the portal complementary to the entrance portal, if it exists"""
     portalKeys = gameState['portalMap'].keys()
     for coord in portalKeys:
-        #print(list(gameState['portalMap'][coord].values())[0])
-        if (list(gameState['portalMap'][coord].values())[0]['owner'] == list(gameState['portalMap'][entrancePortalCoord].values())[0]['owner']) and (list(gameState['portalMap'][coord].values())[0]['portalColor'] != list(gameState['portalMap'][entrancePortalCoord].values())[0]['portalColor']):
+        #print(gameState['portalMap'][coord])
+        #don't do anything if this pair of coordinates doesn't have a value
+        if (gameState['portalMap'][coord] == {}):
+            continue
+        if (list(gameState['portalMap'][coord].values())[0]['owner'] == list(gameState['portalMap'][entrancePortalCoord].values())[0]['owner']) and \
+            (list(gameState['portalMap'][coord].values())[0]['portalColor'] != list(gameState['portalMap'][entrancePortalCoord].values())[0]['portalColor']):
             return coord
     return None   
 

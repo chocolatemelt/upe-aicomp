@@ -101,9 +101,9 @@ class Space():
         """print a 3-character representation of this Space's current state"""
         returnString = ""
         if (self.type == SpaceType.hardBlock):
-            returnString += "|"
+            returnString += ("|" if not self.containsPortal else "S")
         if (self.type == SpaceType.softBlock):
-            returnString += "x"
+            returnString += ("x" if not self.containsPortal else "s")
         if (self.containsBomb):
             returnString += "B"
         if (self.containsOpponent):
