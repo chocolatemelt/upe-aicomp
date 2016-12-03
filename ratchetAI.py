@@ -37,5 +37,15 @@ def chooseMove(board,gameState):
         # todo: we should probably do something here even though the next space in our path is currently lethal
             return ''
         
+    def tryPurchaseUpgrade():
+        """attempt to select an upgrade to purchase"""
+        #todo: for now just buy more pierce to speed up approachOpponent, but put more thought into upgrades later
+        #todo: consider saving some coins for 'buy_block' in emergencies
+        return "buy_pierce"
+        
     move = escapeTrail()
-    return move if move != None else approachOpponent()
+    if (move == None):
+        move = approachOpponent()
+    if (move == None or move == ""):
+        move = tryPurchaseUpgrade()
+    return move

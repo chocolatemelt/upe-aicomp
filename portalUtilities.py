@@ -27,7 +27,7 @@ def getAdjacentSpaces(board,space,direction="all"):
     
     
 def getComplementaryPortalCoord(gameState,entrancePortalCoord):
-    """return the portal corresponding to the entrance portal, if it exists"""
+    """return the coordinates of the portal complementary to the entrance portal, if it exists"""
     portalKeys = gameState['portalMap'].keys()
     for coord in portalKeys:
         #print(list(gameState['portalMap'][coord].values())[0])
