@@ -5,6 +5,50 @@ Created on Nov 18, 2016
 '''
 from space import Space
 from portalUtilities import *
+#returns a set of spaces hit by the apocalypse, given n iterations
+#@param iters: the number of apocalypse iterations that have occurred (turn <= 400 is 0 iterations)
+def apocaSpaces(iters):
+    invalid = set()
+    if iters == 0:
+        return invalid
+    #the bottom left's initial location
+    location = (10,0)
+    #bottom left's initial direction (north)
+    direction = 1
+    
+    #iterate iters times
+    for i in range(iters):
+        #add the invalid location and its opposite block
+        invalid.add(location)
+        invalid.add(opposite(location))
+        newloc = makeStep(location, direction)
+        (x,y) = newloc
+        # if we've stepped out of bounds, change direction and make new step
+        # or if we've looped back
+        if newloc in invalid or x == -1 or x == 11 or y == -1 or y == 11:
+            direction = (direction + 1) % 4
+            newloc = makeStep(location, direction)
+        print(direction)
+        location = newloc
+    return invalid
+#HELPER FUNCTION FOR THE apocaSpaces FUNCTION
+def opposite(loc):
+    (x,y) = loc
+    return (10-x, 10-y)
+#HELPER FUNCTION FOR THE apocaSpaces FUNCTION
+def makeStep(location, direction):
+    (x,y) = location
+    if direction == 0:
+        y -= 1
+    elif direction == 1:
+        x -= 1
+    elif direction == 2:
+        y += 1
+    elif direction == 3:
+        x += 1
+    else:
+        print("invalid direction input: " + str(direction))
+    return (x,y)
 
 def applyMove(board,gameState, move, player = "player"):
     """make the appropriate changes to board and gameState in order to apply move for selected player"""
