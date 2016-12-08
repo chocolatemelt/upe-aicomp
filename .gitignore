@@ -89,4 +89,6 @@ ENV/
 .ropeproject
 *.project
 *.pydevproject
-gameState.txt
+
+#only ignore the root-level gameState (preserve test gameStates)
+/gameState.txt

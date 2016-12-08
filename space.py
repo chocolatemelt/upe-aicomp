@@ -129,6 +129,9 @@ class Space():
         else:
             returnString = returnString[1] + returnString[0] + returnString[1]
         return returnString
+
+    def containsUpcomingFire(self):
+        """determine whether or not this Space will be occupied by apocalypse fire in a few turns"""
         
     def initializeLateProperties(self,gameState,board):
         """init properties that depend on other spaces to be initialized"""
