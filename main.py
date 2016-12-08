@@ -22,9 +22,10 @@ def main():
     """main function which handles loading up the AI each turn and communicating with the game server"""
     #allow optional command line argument to overwrite AIMode (allows for local testing without risk of forgetting to change AIMode back)
     if (len(sys.argv) > 1):
-        AIMode = sys.argv[1]
+        #use exec here so that python does not have a problem with falling back to the AIMode declaration above
+        exec("AIMode = sys.argv[1]",locals(),globals())
     
-    print("Starting AI: '" + AIMode + "' from " + "command line argument." if len(sys.argv) > 1 else "main file declaration.")
+    print("Starting AI: '" + AIMode + "' from " + ("command line argument." if len(sys.argv) > 1 else "main file declaration."))
         
     gameMode = util.selectGameMode()
     #special mode: generate a single move by reading gameState from JSON file
@@ -38,7 +39,7 @@ def main():
         util.printBoard(board)
         moveChoice = eval(AIMode + ".chooseMove(board,jsonData)")
         print("move choice:", moveChoice)
-        print(jsonData)
+        print("json data:", jsonData)
         return
 
     jsonData = requests.post(qualifierURL if gameMode == "1" else rankedURL, data={'devkey': devkey, 'username': username}).json() # search for new game

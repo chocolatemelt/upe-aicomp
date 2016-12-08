@@ -41,7 +41,7 @@ def getComplementaryPortalCoord(gameState,entrancePortalCoord):
     """return the coordinates of the portal complementary to the entrance portal, if it exists"""
     portalKeys = gameState['portalMap'].keys()
     for coord in portalKeys:
-        print(gameState['portalMap'][coord])
+        #print(gameState['portalMap'][coord])
         #don't do anything if this pair of coordinates doesn't have a value
         if (gameState['portalMap'][coord] == {}):
             continue
@@ -65,9 +65,9 @@ def portalExitSpace(board,gameState,entranceSpace):
 def canTraversePortal(board,gameState,currentSpace,newSpace):
     """return whether or not newSpace contains a portal facing currentSpace, which leads to a walkable space"""
     if (newSpace.containsPortal and gameState['portalMap'][newSpace.containedPortalCoord] != {}):
-        print(gameState['portalMap'])
+        #print(gameState['portalMap'])
         #todo: didn't realize that key of portalMap is portal direction, so we can eliminate direction finding code and simply use this key
-        print(gameState['portalMap'][newSpace.containedPortalCoord])
+        #print(gameState['portalMap'][newSpace.containedPortalCoord])
         correspondingColor = list(gameState['portalMap'][newSpace.containedPortalCoord].values())[0]['portalColor']
         playerString = "player" if (list(gameState['portalMap'][newSpace.containedPortalCoord].values())[0]['owner'] == gameState['playerIndex']) else "opponent"
         direction = gameState[playerString][correspondingColor+"Portal"]['direction']
