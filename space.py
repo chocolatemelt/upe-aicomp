@@ -1,5 +1,5 @@
 import portalUtilities as portalUtil#several misc functions that are unrelated to functionality or not specific to AI
-from portalUtilities import SpaceType
+from portalUtilities import SpaceType, fireTurnMap
 
 def checkBombAffectedCoords(x,y,bombPierce,bombRange,board,gameState):
     """get a list of all coords that will be hit by the bomb at position x,y
@@ -129,12 +129,17 @@ class Space():
         else:
             returnString = returnString[1] + returnString[0] + returnString[1]
         return returnString
-
-    def containsUpcomingFire(self):
-        """determine whether or not this Space will be occupied by apocalypse fire in a few turns"""
         
     def initializeLateProperties(self,gameState,board):
         """init properties that depend on other spaces to be initialized"""
+        
+        def checkContainsUpcomingFire(self):
+            """determine whether or not this Space will be occupied by apocalypse fire in a few turns"""
+            maxLookaheadTurns = 4
+            fireTurn = fireTurnMap[self.x][self.y]
+            if (fireTurn - gameState['moveNumber'] <= maxLookaheadTurns):
+                return True, fireTurn - gameState['moveNumber']
+            return False, -1
 
         def checkContainsUpcomingTrail():
             """set whether or not an explosion Trail will soon be on this space"""
@@ -156,5 +161,14 @@ class Space():
                     return (True,bombTurnsRemaining)
             return (False,-1)
 
-        # todo: may be thrown off if bomb range and pierce count are upgraded after placing (depending on game mechanics)
+        # todo: can be abused if bomb range and pierce count are upgraded after placing
         self.containsUpcomingTrail,self.turnsUntilUpcomingTrail = checkContainsUpcomingTrail()
+        
+        containsUpcomingFire,turnsUntilUpcomingFire = checkContainsUpcomingFire()
+        if ((containsUpcomingFire) and turnsUntilUpcomingFire <= 0):
+            self.containsTrail = True
+            
+        elif (containsUpcomingFire):
+            if ((not self.containsUpcomingTrail) or (self.turnsUntilUpcomingTrail > turnsUntilUpcomingFire)):
+                self.containsUpcomingTrail = True
+                self.turnsUntilUpcomingTrail = turnsUntilUpcomingFire

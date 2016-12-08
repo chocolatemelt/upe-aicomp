@@ -4,7 +4,19 @@ Created on Nov 29, 2016
 @author: Ryan
 '''
 from enum import Enum
-SpaceType = Enum("SpaceType", "empty softBlock hardBlock") # Enum of valid spaces
+
+def loadFireTurnMap():
+    """load in hard-coded 11x11 fire turn map, then flip so that access is [x][y] to match Board access"""
+    boardSize = 11
+    fireMapFile = open( "fireTurnMap.txt", "r" )
+    data = [[int(n) for n in line.split()] for line in fireMapFile]
+    fireMapFile.close()
+    rotated = [[None for j in range(boardSize)] for i in range(boardSize)]
+    for i, row in enumerate(data):
+        for j, value in enumerate(row):
+            rotated[j][i] = value
+    return rotated
+
 def getAdjacentSpaces(board,space,direction="all"):
         """return a list of all valid adjacent spaces (direction specified as left, right, up, and down)"""
         #if an x,y coord string is passed in for space, treat it as an empty object with x,y keys
@@ -64,3 +76,7 @@ def canTraversePortal(board,gameState,currentSpace,newSpace):
             exitSpace = portalExitSpace(board,gameState,newSpace)
             return (exitSpace != None and exitSpace.type == SpaceType.empty),exitSpace
     return (False,None)
+
+SpaceType = Enum("SpaceType", "empty softBlock hardBlock") # Enum of valid spaces
+#initialize global fire turn map
+fireTurnMap = loadFireTurnMap()
