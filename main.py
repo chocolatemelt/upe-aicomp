@@ -1,4 +1,5 @@
 """basic AI designed to overcome basic, common circumstances in order to beat random the qualifier bot"""
+import sys #necessary to parse command line args
 import requests #needed to send and receive data from the server
 import json #allows us to test the game at a single point in time by reading / writing JSON data to a file
 import os.path #allows us to check if JSON file exists before attempting to read data from it when in debug mode
@@ -6,6 +7,7 @@ from space import Space, SpaceType #custom space class containing information ab
 import utilities as util#several misc functions that are unrelated to functionality or not specific to AI
 import ratchetAI as ratchet #basic AI which operates by approaching the opponent, placing bombs when necessary, and evading bomb trails
 import minimaxAI as minimax #smarter AI which operates by generating a tree of future gameStates, and selecting the Node which leads to the least loss
+import apocalypseTestAI as apocaTest #test AI used to examine the behavior of the apocalypse ring of fire
 
 debugMode = True #flag which instructs the program to write gameState to JSON file each turn for future processing
 AIMode = "ratchet"
@@ -18,6 +20,12 @@ rankedURL = "http://aicomp.io/api/games/search" # ranked matchmaking vs other AI
 
 def main():
     """main function which handles loading up the AI each turn and communicating with the game server"""
+    #allow optional command line argument to overwrite AIMode (allows for local testing without risk of forgetting to change AIMode back)
+    if (len(sys.argv) > 1):
+        AIMode = sys.argv[1]
+    
+    print("Starting AI: '" + AIMode + "' from " + "command line argument." if len(sys.argv) > 1 else "main file declaration.")
+        
     gameMode = util.selectGameMode()
     #special mode: generate a single move by reading gameState from JSON file
     if (gameMode == "0"):
