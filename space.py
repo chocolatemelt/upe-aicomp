@@ -133,9 +133,9 @@ class Space():
     def initializeLateProperties(self,gameState,board):
         """init properties that depend on other spaces to be initialized"""
         
-        def checkContainsUpcomingFire(self):
+        def checkContainsUpcomingFire():
             """determine whether or not this Space will be occupied by apocalypse fire in a few turns"""
-            maxLookaheadTurns = 4
+            maxLookaheadTurns = 4 #subtract 2 from this value to get the actual number of turns before upcoming trail is toggled
             fireTurn = fireTurnMap[self.x][self.y]
             if (fireTurn - gameState['moveNumber'] <= maxLookaheadTurns):
                 return True, fireTurn - gameState['moveNumber']
