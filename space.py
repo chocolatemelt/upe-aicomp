@@ -88,6 +88,13 @@ class Space():
                 if (trailX ==self.x and trailY == self.y):
                     return True
             return False
+        
+        def checkIsCenterSpace():
+            """set whether or not this space is in the center of the grid"""
+            boardSize = len(board)
+            if (boardSize % 2 == 1):
+                return (self.x == boardSize // 2 and self.y == boardSize // 2)
+            return ((self.x == boardSize/2 or self.x == boardSize/2 - 1) and (self.y == boardSize/2 or self.y == boardSize/2 - 1))
 
         self.x = x
         self.y = y
@@ -96,6 +103,7 @@ class Space():
         self.containsPortal,self.containedPortalCoord = checkContainsPortal()
         self.containsTrail = checkContainsTrail()
         self.containsPlayer,self.containsOpponent = checkContainsEitherPlayer()
+        self.isCenterSpace = checkIsCenterSpace()
         
     def getState(self):
         """print a 3-character representation of this Space's current state"""
