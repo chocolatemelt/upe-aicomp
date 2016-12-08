@@ -75,7 +75,7 @@ class Space():
             for coord in portalKeys:
                 portalX = int(coord.split(",")[0])
                 portalY = int(coord.split(",")[1])
-                if (portalX ==self.x and portalY == self.y):
+                if ((portalX ==self.x and portalY == self.y) and (gameState['portalMap'][coord] != {})):
                     return True,coord
             return False,None
 
