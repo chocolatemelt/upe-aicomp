@@ -25,7 +25,6 @@ def getAdjacentSpaces(board,space,direction="all"):
             adjacentSpaces.append(board[space.x][space.y+1])
         return None if len(adjacentSpaces) == 0 else adjacentSpaces[0] if direction != "all" else adjacentSpaces
 
-
 def getComplementaryPortalCoord(gameState,entrancePortalCoord):
     """return the coordinates of the portal complementary to the entrance portal, if it exists"""
     portalKeys = gameState['portalMap'].keys()

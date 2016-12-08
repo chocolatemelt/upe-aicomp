@@ -8,6 +8,26 @@ from portalUtilities import *
 #returns a set of spaces hit by the apocalypse, given n iterations
 #@param iters: the number of apocalypse iterations that have occurred (turn <= 400 is 0 iterations)
 def apocaSpaces(iters):
+    #HELPER FUNCTION FOR THE apocaSpaces FUNCTION
+    def opposite(loc):
+        (x,y) = loc
+        return (10-x, 10-y)
+    
+    #HELPER FUNCTION FOR THE apocaSpaces FUNCTION
+    def makeStep(loc, stepDir):
+        (x,y) = loc
+        if stepDir == 0:
+            y -= 1
+        elif stepDir == 1:
+            x -= 1
+        elif stepDir == 2:
+            y += 1
+        elif stepDir == 3:
+            x += 1
+        else:
+            print("invalid stepDirection input: " + str(stepDir))
+        return (x,y)
+    
     invalid = set()
     if iters == 0:
         return invalid
@@ -17,7 +37,7 @@ def apocaSpaces(iters):
     direction = 1
     
     #iterate iters times
-    for i in range(iters):
+    for _ in range(iters):
         #add the invalid location and its opposite block
         invalid.add(location)
         invalid.add(opposite(location))
@@ -28,27 +48,9 @@ def apocaSpaces(iters):
         if newloc in invalid or x == -1 or x == 11 or y == -1 or y == 11:
             direction = (direction + 1) % 4
             newloc = makeStep(location, direction)
-        print(direction)
+        #print(direction)
         location = newloc
     return invalid
-#HELPER FUNCTION FOR THE apocaSpaces FUNCTION
-def opposite(loc):
-    (x,y) = loc
-    return (10-x, 10-y)
-#HELPER FUNCTION FOR THE apocaSpaces FUNCTION
-def makeStep(location, direction):
-    (x,y) = location
-    if direction == 0:
-        y -= 1
-    elif direction == 1:
-        x -= 1
-    elif direction == 2:
-        y += 1
-    elif direction == 3:
-        x += 1
-    else:
-        print("invalid direction input: " + str(direction))
-    return (x,y)
 
 def applyMove(board,gameState, move, player = "player"):
     """make the appropriate changes to board and gameState in order to apply move for selected player"""
@@ -290,3 +292,10 @@ def unshared_copy(inList):
     if isinstance(inList, list):
         return list( map(unshared_copy, inList) )
     return inList
+
+def main():
+    #if we're running this helper class directly, perform some unit tests
+    print(apocaSpaces(400))
+
+if __name__ == "__main__":
+    main()
