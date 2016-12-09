@@ -129,9 +129,12 @@ def findPath(gameState,board,startSpace, desiredProperty, desiredState = True, r
             if ((finalPathDistance != -1) and (currentSpace.startDistance + 1 > finalPathDistance)):
                 return solutions
             
-            canTraverse = canTraversePortal(board,gameState,currentSpace,newSpace)
-            if (canTraverse[0]): #if the current block is a wall with a portal on it, re-assign it to the destination block 
-                newSpace = canTraverse[1] 
+            try:
+                canTraverse = canTraversePortal(board,gameState,currentSpace,newSpace)
+                if (canTraverse[0]): #if the current block is a wall with a portal on it, re-assign it to the destination block 
+                    newSpace = canTraverse[1] 
+            except:
+                pass
 
             # if the newSpace is a goal, find a path back to startSpace (or all equal paths if returnAllSolutions is True)
             if conditionMet(newSpace):

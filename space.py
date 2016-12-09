@@ -100,7 +100,10 @@ class Space():
         self.y = y
         self.type = checkType()
         self.containsBomb = checkContainsBomb()
-        self.containsPortal,self.containedPortalCoord = checkContainsPortal()
+        try:
+            self.containsPortal,self.containedPortalCoord = checkContainsPortal()
+        except:
+            self.containsPortal = False
         self.containsTrail = checkContainsTrail()
         self.containsPlayer,self.containsOpponent = checkContainsEitherPlayer()
         self.isCenterSpace = checkIsCenterSpace()

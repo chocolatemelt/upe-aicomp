@@ -6,11 +6,12 @@ import os.path #allows us to check if JSON file exists before attempting to read
 from space import Space, SpaceType #custom space class containing information about a given board position
 import utilities as util#several misc functions that are unrelated to functionality or not specific to AI
 import ratchetAI as ratchet #basic AI which operates by approaching the opponent, placing bombs when necessary, and evading bomb trails
+import safeRatchetAI as safeRatchet #ratchet with multiple try-catch blocks to ensure robust error handling
 import minimaxAI as minimax #smarter AI which operates by generating a tree of future gameStates, and selecting the Node which leads to the least loss
 import apocalypseTestAI as apocaTest #test AI used to examine the behavior of the apocalypse ring of fire
 
 debugMode = True #flag which instructs the program to write gameState to JSON file each turn for future processing
-AIMode = "ratchet"
+AIMode = "safeRatchet"
 
 # initialize global networking constants
 username = "kzhaaang"
