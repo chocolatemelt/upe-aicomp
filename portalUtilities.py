@@ -4,6 +4,7 @@ Created on Nov 29, 2016
 @author: Ryan
 '''
 from enum import Enum
+import math
 
 def loadFireTurnMap():
     """load in hard-coded 11x11 fire turn map, then flip so that access is [x][y] to match Board access"""
@@ -16,6 +17,15 @@ def loadFireTurnMap():
         for j, value in enumerate(row):
             rotated[j][i] = value
     return rotated
+
+def sortAdjacentSpacesByCenterDistance(adjacentSpaces):
+    """list list of adjacent spaces by shortest distance from center to largest distance from center"""
+    newAdjacentSpaces = list(adjacentSpaces)
+    return sorted(newAdjacentSpaces, key=centerDistance)
+               
+def centerDistance(space):
+    """get the distance of the space from the center of the board"""
+    return math.sqrt(math.pow(5.5-space.x,2) + math.pow(5.5-space.y,2))
 
 def getAdjacentSpaces(board,space,direction="all"):
         """return a list of all valid adjacent spaces (direction specified as left, right, up, and down)"""
@@ -35,6 +45,13 @@ def getAdjacentSpaces(board,space,direction="all"):
             adjacentSpaces.append(board[space.x+1][space.y])
         if (direction in ("down","all") and space.y < len(board) - 1):
             adjacentSpaces.append(board[space.x][space.y+1])
+        
+        #sort adjacentSpaces from lowest to greatest distance from center
+        try:
+            newAdjacentSpaces = sortAdjacentSpacesByCenterDistance(adjacentSpaces)
+            adjacentSpaces = newAdjacentSpaces
+        except:
+            print("critical error in sortAdjacentSpacesByCenterDistance. Continuing Silently..")
         return None if len(adjacentSpaces) == 0 else adjacentSpaces[0] if direction != "all" else adjacentSpaces
 
 def getComplementaryPortalCoord(gameState,entrancePortalCoord):
