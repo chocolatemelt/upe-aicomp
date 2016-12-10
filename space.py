@@ -143,7 +143,7 @@ class Space():
             fireTurn = fireTurnMap[self.x][self.y]
             if (fireTurn - gameState['moveNumber'] <= maxLookaheadTurns):
                 return True, fireTurn - gameState['moveNumber']
-            return False, -1
+            return False, 999
 
         def checkContainsUpcomingTrail():
             """set whether or not an explosion Trail will soon be on this space"""
@@ -168,11 +168,11 @@ class Space():
         # todo: can be abused if bomb range and pierce count are upgraded after placing
         self.containsUpcomingTrail,self.turnsUntilUpcomingTrail = checkContainsUpcomingTrail()
         
-        containsUpcomingFire,turnsUntilUpcomingFire = checkContainsUpcomingFire()
-        if ((containsUpcomingFire) and turnsUntilUpcomingFire <= 0):
+        self.containsUpcomingFire,self.turnsUntilUpcomingFire = checkContainsUpcomingFire()
+        if ((self.containsUpcomingFire) and self.turnsUntilUpcomingFire <= 0):
             self.containsTrail = True
             
-        elif (containsUpcomingFire):
-            if ((not self.containsUpcomingTrail) or (self.turnsUntilUpcomingTrail > turnsUntilUpcomingFire)):
+        elif (self.containsUpcomingFire):
+            if ((not self.containsUpcomingTrail) or (self.turnsUntilUpcomingTrail > self.turnsUntilUpcomingFire)):
                 self.containsUpcomingTrail = True
-                self.turnsUntilUpcomingTrail = turnsUntilUpcomingFire
+                self.turnsUntilUpcomingTrail = self.turnsUntilUpcomingFire
