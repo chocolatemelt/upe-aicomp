@@ -134,6 +134,7 @@ def findPath(gameState,board,startSpace, desiredProperty, desiredState = True, r
                 if (canTraverse[0]): #if the current block is a wall with a portal on it, re-assign it to the destination block 
                     newSpace = canTraverse[1] 
             except:
+                print("critical error in canTraversePortal. Continuing Silently..")
                 pass
 
             # if the newSpace is a goal, find a path back to startSpace (or all equal paths if returnAllSolutions is True)

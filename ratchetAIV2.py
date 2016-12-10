@@ -48,15 +48,18 @@ def chooseMove(board,gameState):
     try:
         move = escapeTrail()
     except:
+        print("critical error in escapeTrail. Continuing Silently..")
         move = None
     if (move == None):
         try:
             move = approachOpponent()
         except:
+            print("critical error in approachOpponent. Continuing Silently..")
             move = None
     if (move == None or move == ""):
         try:
             move = tryPurchaseUpgrade()
         except:
+            print("critical error in tryPurchaseUpgrade. Continuing Silently..")
             move = ""
     return move

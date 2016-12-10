@@ -103,6 +103,7 @@ class Space():
         try:
             self.containsPortal,self.containedPortalCoord = checkContainsPortal()
         except:
+            print("critical error in checkContainsPortal. Continuing Silently..")
             self.containsPortal = False
         self.containsTrail = checkContainsTrail()
         self.containsPlayer,self.containsOpponent = checkContainsEitherPlayer()
@@ -138,7 +139,7 @@ class Space():
         
         def checkContainsUpcomingFire():
             """determine whether or not this Space will be occupied by apocalypse fire in a few turns"""
-            maxLookaheadTurns = 4 #subtract 2 from this value to get the actual number of turns before upcoming trail is toggled
+            maxLookaheadTurns = 6 #subtract 2 from this value to get the actual number of turns before trail spawns
             fireTurn = fireTurnMap[self.x][self.y]
             if (fireTurn - gameState['moveNumber'] <= maxLookaheadTurns):
                 return True, fireTurn - gameState['moveNumber']
