@@ -160,7 +160,7 @@ def findPath(gameState,board,startSpace, desiredProperty, desiredState = True, r
                             pathsFound[len(pathsFound)-1].append(pathsFound[0][len(pathsFound[0])-1].parents[i])
 
             # attempt to keep branching from newSpace as long as it is a walkable type
-            if (allowOpponent or newSpace.containsOpponent == False) and (newSpace.containsBomb == False) and \
+            if (allowOpponent or newSpace.containsOpponent == False) and (newSpace.containsTrail == False) and (newSpace.containsBomb == False) and \
             (((newSpace.type in (SpaceType.empty, SpaceType.softBlock)) and allowSoftBlocks) or newSpace.type == SpaceType.empty): #sometimes (eg. escaping upcoming trail) we don't want softBlocks in our path
                 newStartDistance = currentSpace.startDistance + (softBlockWeight if newSpace.type == SpaceType.softBlock else 1) #weigh soft blocks as taking 10 moves, as they need to be blown up todo: 10 is a temp value!
                 notInOpenSet = not (newSpace in openSet)
